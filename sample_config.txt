@@ -1,0 +1,59 @@
+# rename this file to config.txt
+
+hide_web_browser: False  # set to True to run web automation invisibly in the background
+
+amazon_gift_card_reload:
+
+  # total purchases to make each month
+  total_purchases: 40
+
+  # random number chosen between these two values to spend. These numbers are cents.
+  amount_min: 50
+  amount_max: 59
+
+  # minimum gap in seconds between each purchase. This usually only applies if you start this script late in the month.
+  min_gap: 17280
+
+  # extra time before & after each scheduled purchase to allow for some randomness in the timing
+  time_variance: 14400
+
+  # day of the month to start making purchases. Recommended to leave at 2 to avoid potential off by one errors in all systems.
+  min_day: 2
+
+  # day of the month to stop making purchases. Leave blank to default to the end of the month minus one day.
+  max_day:
+
+  # do not put quotes around usr or psw
+  usr: you@domain.com
+  psw: p@ssw0rd
+
+  # just numbers. No quotes, no dashes. Amazon sometimes asks to input full card number for verification.
+  card: 1111222233334444
+
+xfinity_bill_pay:
+
+  # total purchases to make each month
+  total_purchases: 20
+
+  # random number chosen between these two values to spend. These numbers are cents.
+  amount_min: 20
+  amount_max: 200
+
+  # minimum gap in seconds between each purchase. This usually only applies if you start this script late in the month.
+  min_gap: 43200
+
+  # extra time before & after each scheduled purchase to allow for some randomness in the timing
+  time_variance: 14400
+
+  # day of the month to start making purchases. Recommended to leave at 2 to avoid potential off by one errors in all systems.
+  min_day: 2
+
+  # day of the month to stop making purchases. Leave blank to default to the end of the month minus one day.
+  max_day: 21
+
+  # do not put quotes around usr or psw
+  usr: username
+  psw: p@ssw0rd
+
+  # just numbers. No quotes, no dashes. Optionally just put last 4 digits of card number since xfinity does not need the whole number.
+  card: 1111222233334444

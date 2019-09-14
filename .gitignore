@@ -1,0 +1,5 @@
+config.txt
+state/
+
+.idea/
+geckodriver*
