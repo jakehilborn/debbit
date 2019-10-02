@@ -24,6 +24,12 @@ def main():
     now = datetime.now()
     state = load_state(now.year, now.month)
 
+    for merchant_name in state:
+        cur_purchases = state[merchant_name]['purchase_count']
+        purchase_pluralized = 'purchase' if cur_purchases == 1 else 'purchases'
+        logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + purchase_pluralized + ' complete for ' + now.strftime('%B %Y'))
+    print()
+
     start_schedule(now, state, amazon)
     start_schedule(now, state, xfinity)
 
@@ -86,6 +92,7 @@ def schedule_next(merchant, cur_purchases):
 
     start_offset = random.randint(int(range_min), int(range_max))
     logging.info('Scheduling next ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
+    print()
     Timer(start_offset, retryable, [merchant.function]).start()
 
 
@@ -121,7 +128,7 @@ def record_transaction(merchant_name, amount):
 
     state_lock.release()
 
-    purchase_pluralized = 'purchases' if cur_purchases > 1 else 'purchase'
+    purchase_pluralized = 'purchase' if cur_purchases == 1 else 'purchases'
     logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + purchase_pluralized + ' complete for ' + now.strftime('%B %Y'))
     return cur_purchases
 
@@ -299,4 +306,5 @@ if __name__ == '__main__':
 TODO
 
 Replace Timer offset with time so computer can sleep
+Add burst mode so this is usable for laptops that sleep
 '''
