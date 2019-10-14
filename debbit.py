@@ -247,7 +247,8 @@ def retryable(function):
     driver = get_webdriver()
 
     failures = 0
-    while failures < 3:
+    threshold = 5
+    while failures < threshold:
         try:
             function(driver)
             driver.close()
@@ -257,7 +258,10 @@ def retryable(function):
         except:
             logging.error(function.__name__ + ' error: ' + traceback.format_exc())
             failures += 1
-            time.sleep(60)
+
+            if failures < threshold:
+                logging.info(str(failures) + ' of ' + str(threshold) + ' attempts done, trying again in ' + str(failures * 60) + ' seconds')
+                time.sleep(failures * 60)
 
     driver.close()
     logging.error(function.__name__ + ' failed ' + str(failures) + ' times in a row')
@@ -307,4 +311,7 @@ TODO
 
 Replace Timer offset with time so computer can sleep
 Add burst mode so this is usable for laptops that sleep
+    specify minimum gap between bursts (+- randomness)
+    scheduler executes that many purchases in succession at that clock time
+    should execute directly after wake up if laptop sleeping
 '''
