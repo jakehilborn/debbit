@@ -1,5 +1,8 @@
 config.txt
 state/
+failures/
 
-.idea/
 geckodriver*
+
+.DS_Store
+.idea/

@@ -48,13 +48,13 @@ def load_state(year, month):
 def start_schedule(now, state, merchant):
     if merchant.name not in state:  # first run of the month
         if now.day >= merchant.min_day:
-            retryable(merchant.function)
+            function_wrapper(merchant.function)
         else:
             start_offset = (datetime(now.year, now.month, merchant.min_day) - now).total_seconds()
             logging.info('Scheduling ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
-            Timer(start_offset, retryable, [merchant.function]).start()
+            Timer(start_offset, function_wrapper, [merchant.function]).start()
     elif state[merchant.name]['purchase_count'] < merchant.total_purchases and now.timestamp() - state[merchant.name]['transactions'][-1]['unix_time'] > merchant.min_gap:
-        retryable(merchant.function)
+        function_wrapper(merchant.function)
     else:
         schedule_next(merchant, state[merchant.name]['purchase_count'])
 
@@ -93,7 +93,7 @@ def schedule_next(merchant, cur_purchases):
     start_offset = random.randint(int(range_min), int(range_max))
     logging.info('Scheduling next ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
     print()
-    Timer(start_offset, retryable, [merchant.function]).start()
+    Timer(start_offset, function_wrapper, [merchant.function]).start()
 
 
 def record_transaction(merchant_name, amount):
@@ -141,7 +141,7 @@ def amazon_gift_card_reload(driver):
 
     driver.get('https://www.amazon.com/asv/reload/order?ref_=gcui_b_e_rb_c_d_b_x')
 
-    WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
+    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
     driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
     driver.find_element_by_id('ap_email').send_keys(merchant.usr)
 
@@ -150,19 +150,19 @@ def amazon_gift_card_reload(driver):
     except common.exceptions.NoSuchElementException:  # a/b tested old UI flow
         pass
 
-    WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, 'ap_password')))
+    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'ap_password')))
     driver.find_element_by_id('ap_password').send_keys(merchant.psw)
     driver.find_element_by_id('signInSubmit').click()
 
-    WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
+    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
     driver.find_element_by_id('asv-manual-reload-amount').send_keys(cents_to_str(amount))
     driver.find_element_by_xpath("//span[contains(text(),'ending in " + str(merchant.card)[-4:] + "')]").click()
     driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
 
-    time.sleep(10) # give page a chance to load
+    time.sleep(10)  # give page a chance to load
     if 'thank-you' not in driver.current_url:
         logging.info('starting amazon_gift_card_reload cc verification, waiting for input field')
-        WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")))
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")))
         elem = driver.find_element_by_xpath("//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")
         logging.info('found cc field')
         elem.send_keys(str(merchant.card))
@@ -172,12 +172,12 @@ def amazon_gift_card_reload(driver):
         elem.send_keys(Keys.ENTER)
         logging.info('pressed enter')
         logging.info('waiting for Reload $ button')
-        WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
         time.sleep(1)
         driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
         logging.info('clicked reload button')
 
-    time.sleep(10)  # give page a chance to load
+    time.sleep(15)  # give page a chance to load
     if 'thank-you' not in driver.current_url:
         logging.error('Unexpected amazon_gift_card_reload failure, NOT scheduling any future purchases')
         return
@@ -243,7 +243,7 @@ def cents_to_str(cents):
         return str(cents)[:-2] + '.' + str(cents)[-2:]
 
 
-def retryable(function):
+def function_wrapper(function):
     driver = get_webdriver()
 
     failures = 0
@@ -259,12 +259,29 @@ def retryable(function):
             logging.error(function.__name__ + ' error: ' + traceback.format_exc())
             failures += 1
 
+            record_failure(driver, function.__name__)
+
             if failures < threshold:
                 logging.info(str(failures) + ' of ' + str(threshold) + ' ' + function.__name__ + ' attempts done, trying again in ' + str(failures * 60) + ' seconds')
                 time.sleep(failures * 60)
 
     driver.close()
     logging.error(function.__name__ + ' failed ' + str(failures) + ' times in a row')
+
+
+def record_failure(driver, function_name):
+    now = datetime.now()
+    dom = driver.execute_script('return document.documentElement.outerHTML')
+
+    if not os.path.exists('failures'):
+        os.mkdir('failures')
+
+    filename = 'failures/' + now.strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + function_name
+
+    driver.save_screenshot(filename + '.png')
+
+    with open(filename + '.html', 'w') as f:
+        f.write(dom)
 
 
 def get_webdriver():
@@ -291,8 +308,8 @@ class Merchant:
 
 
 try:
-    with open('config.txt', 'r') as f:
-        config = yaml.safe_load(f.read())
+    with open('config.txt', 'r') as config_f:
+        config = yaml.safe_load(config_f.read())
 except FileNotFoundError:
     logging.error('Please create a config.txt file')
 
