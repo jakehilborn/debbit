@@ -260,7 +260,7 @@ def retryable(function):
             failures += 1
 
             if failures < threshold:
-                logging.info(str(failures) + ' of ' + str(threshold) + ' attempts done, trying again in ' + str(failures * 60) + ' seconds')
+                logging.info(str(failures) + ' of ' + str(threshold) + ' ' + function.__name__ + ' attempts done, trying again in ' + str(failures * 60) + ' seconds')
                 time.sleep(failures * 60)
 
     driver.close()
