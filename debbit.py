@@ -190,8 +190,8 @@ def amazon_gift_card_reload(driver):
         WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
         time.sleep(1)
         driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
+        time.sleep(10)  # give page a chance to load
 
-    time.sleep(10)  # give page a chance to load
     if 'thank-you' not in driver.current_url:
         logging.error('Unexpected amazon_gift_card_reload failure, NOT scheduling any future purchases')
         return
