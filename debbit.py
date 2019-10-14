@@ -56,6 +56,7 @@ def load_state(year, month):
 
 
 def burst_loop(merchant):
+    suppress_logs = False
     while True:
         now = datetime.now()
         state = load_state(now.year, now.month)
@@ -72,8 +73,35 @@ def burst_loop(merchant):
                 and now.day <= (merchant.max_day if merchant.max_day else days_in_month[now.month]) - 1 \
                 and cur_purchases < merchant.total_purchases:
             function_wrapper(merchant)
+            suppress_logs = False
+        elif not suppress_logs:
+            log_next_burst_time(merchant, now, prev_burst_time, cur_purchases)
+            suppress_logs = True
+        else:
+            time.sleep(300)
 
-        time.sleep(1)  # change to 30
+
+def log_next_burst_time(merchant, now, prev_burst_time, cur_purchases):
+    prev_burst_plus_gap_dt = datetime.fromtimestamp(prev_burst_time + merchant.burst_gap)
+    cur_month_min_day_dt = datetime(now.year, now.month, merchant.min_day)
+
+    if now.month == 12:
+        year = now.year + 1
+        month = 1
+    else:
+        year = now.year
+        month = now.month + 1
+
+    next_month_min_day_dt = datetime(year, month, merchant.min_day)
+
+    if now.day < merchant.min_day:
+        next_burst = prev_burst_plus_gap_dt if prev_burst_plus_gap_dt > cur_month_min_day_dt else cur_month_min_day_dt
+    elif cur_purchases >= merchant.total_purchases or now.day >= (merchant.max_day if merchant.max_day else days_in_month[now.month]):
+        next_burst = prev_burst_plus_gap_dt if prev_burst_plus_gap_dt > next_month_min_day_dt else next_month_min_day_dt
+    else:
+        next_burst = prev_burst_plus_gap_dt
+
+    logging.info('Bursting next ' + merchant.name + ' after ' + next_burst.strftime("%Y-%m-%d %I:%M%p"))
 
 
 def start_schedule(merchant):
@@ -177,7 +205,8 @@ def record_transaction(merchant_name, amount):
 def amazon_gift_card_reload(driver, merchant, amount):
     logging.info('Running ' + merchant.name + ' now')
 
-    # driver.get('https://www.amazon.com/asv/reload/order?ref_=gcui_b_e_rb_c_d_b_x')
+    driver.get('https://www.amazon.com/asv/reload/order?ref_=gcui_b_e_rb_c_d_b_x')
+    driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continastststue')]").click()
     #
     # WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
     # driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
@@ -302,7 +331,7 @@ def function_wrapper(merchant):
             merchant.function(driver, merchant, amount)
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:
+        except Exception as e:
             logging.error(merchant.name + ' error: ' + traceback.format_exc())
             failures += 1
 
@@ -311,15 +340,16 @@ def function_wrapper(merchant):
             if failures < threshold:
                 logging.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.name + ' attempts done, trying again in ' + str(failures * 60) + ' seconds')
                 time.sleep(failures * 60)
-
-            continue
+                continue
+            else:
+                driver.close()
+                error_msg = merchant.name + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run this program to try again.'
+                logging.error(error_msg)
+                raise Exception(error_msg) from e
 
         record_transaction(merchant.name, amount)
         driver.close()
         return
-
-    driver.close()
-    logging.error(merchant.name + ' failed ' + str(failures) + ' times in a row')
 
 
 def record_failure(driver, function_name):
@@ -386,6 +416,6 @@ TODO
 Replace Timer offset with time so computer can sleep
 Add burst mode so this is usable for laptops that sleep
     specify minimum gap between bursts (+- randomness)
-    scheduler executes that many purchases in succession at that clock time
-    should execute directly after wake up if laptop sleeping
+    should execute directly after wake up if laptop sleeping: TEST THIS
+Windows support
 '''
