@@ -154,6 +154,26 @@ def amazon_gift_card_reload(driver):
     driver.find_element_by_id('ap_password').send_keys(merchant.psw)
     driver.find_element_by_id('signInSubmit').click()
 
+    try:  # OTP email validation
+        WebDriverWait(driver, 3).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
+        otp_flow = True
+    except TimeoutException:
+        otp_flow = False
+
+    if otp_flow:
+        driver.find_element_by_id('continue').click()
+
+        WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input")))
+        sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
+        logging.info(sent_to_text)
+        logging.info('Enter OTP here:')
+        otp = input()
+
+        elem = driver.find_element_by_xpath("//input")
+        elem.send_keys(otp)
+        elem.send_keys(Keys.TAB)
+        elem.send_keys(Keys.ENTER)
+
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
     driver.find_element_by_id('asv-manual-reload-amount').send_keys(cents_to_str(amount))
     driver.find_element_by_xpath("//span[contains(text(),'ending in " + str(merchant.card)[-4:] + "')]").click()
@@ -164,20 +184,14 @@ def amazon_gift_card_reload(driver):
         logging.info('starting amazon_gift_card_reload cc verification, waiting for input field')
         WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")))
         elem = driver.find_element_by_xpath("//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")
-        logging.info('found cc field')
         elem.send_keys(str(merchant.card))
-        logging.info('entered cc number')
         elem.send_keys(Keys.TAB)
-        logging.info('pressed tab')
         elem.send_keys(Keys.ENTER)
-        logging.info('pressed enter')
-        logging.info('waiting for Reload $ button')
         WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
         time.sleep(1)
         driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
-        logging.info('clicked reload button')
 
-    time.sleep(15)  # give page a chance to load
+    time.sleep(10)  # give page a chance to load
     if 'thank-you' not in driver.current_url:
         logging.error('Unexpected amazon_gift_card_reload failure, NOT scheduling any future purchases')
         return
