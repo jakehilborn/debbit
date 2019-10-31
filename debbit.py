@@ -26,8 +26,7 @@ def main():
 
     for merchant_name in state:
         cur_purchases = state[merchant_name]['purchase_count']
-        purchase_pluralized = 'purchase' if cur_purchases == 1 else 'purchases'
-        logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + purchase_pluralized + ' complete for ' + now.strftime('%B %Y'))
+        logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
     print()
 
     if config['mode'] != 'burst' and config['mode'] != 'spread':
@@ -57,6 +56,7 @@ def load_state(year, month):
 
 def burst_loop(merchant):
     suppress_logs = False
+    burst_gap = merchant.burst_min_gap
     while True:
         now = datetime.now()
         state = load_state(now.year, now.month)
@@ -68,21 +68,30 @@ def burst_loop(merchant):
         else:
             prev_burst_time = state[merchant.name]['transactions'][merchant.burst_count * -1]['unix_time']
 
-        if prev_burst_time < int(now.timestamp()) - merchant.burst_gap \
+        if prev_burst_time < int(now.timestamp()) - burst_gap \
                 and now.day >= merchant.min_day \
                 and now.day <= (merchant.max_day if merchant.max_day else days_in_month[now.month]) - 1 \
                 and cur_purchases < merchant.total_purchases:
-            function_wrapper(merchant)
+
+            loop_count = min(merchant.burst_count, merchant.total_purchases - cur_purchases)
+            logging.info('Now bursting ' + str(loop_count) + ' ' + merchant.name + ' ' + plural('purchase', loop_count))
+
+            function_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
+            for _ in range(loop_count - 1):
+                time.sleep(30)
+                function_wrapper(merchant)
+
+            burst_gap = merchant.burst_min_gap + random.randint(0, int(merchant.burst_time_variance))
             suppress_logs = False
         elif not suppress_logs:
-            log_next_burst_time(merchant, now, prev_burst_time, cur_purchases)
+            log_next_burst_time(merchant, now, prev_burst_time, burst_gap, cur_purchases)
             suppress_logs = True
         else:
             time.sleep(300)
 
 
-def log_next_burst_time(merchant, now, prev_burst_time, cur_purchases):
-    prev_burst_plus_gap_dt = datetime.fromtimestamp(prev_burst_time + merchant.burst_gap)
+def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, cur_purchases):
+    prev_burst_plus_gap_dt = datetime.fromtimestamp(prev_burst_time + burst_gap)
     cur_month_min_day_dt = datetime(now.year, now.month, merchant.min_day)
 
     if now.month == 12:
@@ -101,7 +110,7 @@ def log_next_burst_time(merchant, now, prev_burst_time, cur_purchases):
     else:
         next_burst = prev_burst_plus_gap_dt
 
-    logging.info('Bursting next ' + merchant.name + ' after ' + next_burst.strftime("%Y-%m-%d %I:%M%p"))
+    logging.info('Bursting next ' + str(merchant.burst_count) + ' ' + merchant.name + ' ' + plural('purchase', merchant.burst_count) + ' after ' + next_burst.strftime("%Y-%m-%d %I:%M%p"))
 
 
 def start_schedule(merchant):
@@ -198,15 +207,14 @@ def record_transaction(merchant_name, amount):
 
     state_write_lock.release()
 
-    purchase_pluralized = 'purchase' if cur_purchases == 1 else 'purchases'
-    logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + purchase_pluralized + ' complete for ' + now.strftime('%B %Y'))
+    logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
 
 
 def amazon_gift_card_reload(driver, merchant, amount):
     logging.info('Running ' + merchant.name + ' now')
 
-    driver.get('https://www.amazon.com/asv/reload/order?ref_=gcui_b_e_rb_c_d_b_x')
-    driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continastststue')]").click()
+    # driver.get('https://www.amazon.com/asv/reload/order?ref_=gcui_b_e_rb_c_d_b_x')
+    # driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continastststue')]").click()
     #
     # WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
     # driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
@@ -373,6 +381,12 @@ def get_webdriver():
     return webdriver.Firefox(options=options, executable_path='./geckodriver')
 
 
+def plural(word, count):
+    if count == 1:
+        return word
+    return word + 's'
+
+
 class Merchant:
     def __init__(self, name, function, config_entry):
         self.name = name
@@ -382,7 +396,8 @@ class Merchant:
         self.amount_min = config_entry['amount_min']
         self.amount_max = config_entry['amount_max']
         self.burst_count = config_entry['burst']['count']
-        self.burst_gap = config_entry['burst']['gap']
+        self.burst_min_gap = config_entry['burst']['min_gap']
+        self.burst_time_variance = config_entry['burst']['time_variance']
         self.spread_min_gap = config_entry['spread']['min_gap']
         self.spread_time_variance = config_entry['spread']['time_variance']
         self.min_day = config_entry['min_day']
@@ -412,10 +427,10 @@ if __name__ == '__main__':
 
 '''
 TODO
-
-Replace Timer offset with time so computer can sleep
-Add burst mode so this is usable for laptops that sleep
-    specify minimum gap between bursts (+- randomness)
-    should execute directly after wake up if laptop sleeping: TEST THIS
 Windows support
+Ensure days_in_month usage is always -1
+Check for internet connection post wake-up before bursting
+
+Look into why next burst is showing late into beginning of month, yet before min_day
+    INFO: 2019-10-30 21:03:40,348 Bursting next 3 xfinity_bill_pay purchases after 2019-11-01 08:32PM
 '''
