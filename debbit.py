@@ -45,7 +45,7 @@ def main():
 
 def load_state(year, month):
     padded_month = '0' + str(month) if month < 10 else str(month)
-    filename = 'state/debbit_' + str(year) + '_' + padded_month + '.txt'
+    filename = os.path.join('state', 'debbit_' + str(year) + '_' + padded_month + '.txt')
 
     try:
         with open(filename, 'r') as f:
@@ -78,7 +78,9 @@ def burst_loop(merchant):
 
             function_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
             for _ in range(loop_count - 1):
-                time.sleep(30)
+                sleep_time = 30
+                logging.info('Sleeping ' + str(sleep_time) + ' seconds before next ' + merchant.name + ' purchase')
+                time.sleep(sleep_time)
                 function_wrapper(merchant)
 
             burst_gap = merchant.burst_min_gap + random.randint(0, int(merchant.burst_time_variance))
@@ -182,7 +184,7 @@ def record_transaction(merchant_name, amount):
         os.mkdir('state')
 
     padded_month = '0' + str(now.month) if now.month < 10 else str(now.month)
-    filename = 'state/debbit_' + str(now.year) + '_' + padded_month + '.txt'
+    filename = os.path.join('state', 'debbit_' + str(now.year) + '_' + padded_month + '.txt')
 
     state_write_lock.acquire()
 
@@ -367,7 +369,7 @@ def record_failure(driver, function_name):
     if not os.path.exists('failures'):
         os.mkdir('failures')
 
-    filename = 'failures/' + now.strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + function_name
+    filename = os.path.join('failures', now.strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + function_name)
 
     driver.save_screenshot(filename + '.png')
 
