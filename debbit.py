@@ -33,14 +33,8 @@ def main():
         logging.error('Set config.txt "mode" to burst or spread')
         return
 
-    for merchant in merchants:
-        if config[merchant.name]['enabled'] == True:
-            if config['mode'] == 'spread':
-                start_schedule(merchant)
-            if config['mode'] == 'burst':
-                Thread(target=burst_loop, args=(merchant,)).start()
-        else:
-            logging.info(merchant.name + ' disabled, set enabled: True to enable.')
+    load_merchant('amazon_gift_card_reload', amazon_gift_card_reload),
+    load_merchant('xfinity_bill_pay', xfinity_bill_pay)
 
 
 def load_state(year, month):
@@ -52,6 +46,21 @@ def load_state(year, month):
             return yaml.safe_load(f.read())
     except FileNotFoundError:
         return {}
+
+
+def load_merchant(name, function):
+    if name not in config:
+        return
+
+    if config[name]['enabled'] == True:
+        merchant = Merchant(name, function, config[name])
+
+        if config['mode'] == 'spread':
+            start_schedule(merchant)
+        if config['mode'] == 'burst':
+            Thread(target=burst_loop, args=(merchant,)).start()
+    else:
+        logging.info(name + ' disabled, set enabled: True to enable.')
 
 
 def burst_loop(merchant):
@@ -380,7 +389,7 @@ def record_failure(driver, function_name):
 def get_webdriver():
     options = Options()
     options.headless = config['hide_web_browser']
-    return webdriver.Firefox(options=options, executable_path='./geckodriver')
+    return webdriver.Firefox(options=options, executable_path='geckodriver')
 
 
 def plural(word, count):
@@ -409,22 +418,15 @@ class Merchant:
         self.card = config_entry['card']
 
 
-try:
-    with open('config.txt', 'r') as config_f:
-        config = yaml.safe_load(config_f.read())
-except FileNotFoundError:
-    logging.error('Please create a config.txt file')
-
-merchants = [
-    Merchant('amazon_gift_card_reload', amazon_gift_card_reload, config['amazon_gift_card_reload']),
-    Merchant('xfinity_bill_pay', xfinity_bill_pay, config['xfinity_bill_pay'])
-]
-
-state_write_lock = Lock()
-days_in_month = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
-
-
 if __name__ == '__main__':
+    try:
+        with open('config.txt', 'r') as config_f:
+            config = yaml.safe_load(config_f.read())
+    except FileNotFoundError:
+        logging.error('Please create a config.txt file')
+
+    state_write_lock = Lock()
+    days_in_month = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
     main()
 
 '''
