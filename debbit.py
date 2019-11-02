@@ -70,7 +70,7 @@ def burst_loop(merchant):
 
         if prev_burst_time < int(now.timestamp()) - burst_gap \
                 and now.day >= merchant.min_day \
-                and now.day <= (merchant.max_day if merchant.max_day else days_in_month[now.month]) - 1 \
+                and now.day <= (merchant.max_day if merchant.max_day else days_in_month[now.month] - 1) \
                 and cur_purchases < merchant.total_purchases:
 
             loop_count = min(merchant.burst_count, merchant.total_purchases - cur_purchases)
@@ -107,7 +107,7 @@ def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, cur_purchases
 
     if now.day < merchant.min_day:
         next_burst = prev_burst_plus_gap_dt if prev_burst_plus_gap_dt > cur_month_min_day_dt else cur_month_min_day_dt
-    elif cur_purchases >= merchant.total_purchases or now.day >= (merchant.max_day if merchant.max_day else days_in_month[now.month]):
+    elif cur_purchases >= merchant.total_purchases or now.day > (merchant.max_day if merchant.max_day else days_in_month[now.month] - 1):
         next_burst = prev_burst_plus_gap_dt if prev_burst_plus_gap_dt > next_month_min_day_dt else next_month_min_day_dt
     else:
         next_burst = prev_burst_plus_gap_dt
@@ -139,8 +139,8 @@ def schedule_next(merchant):
 
     if cur_purchases < merchant.total_purchases:
         remaining_purchases = merchant.total_purchases - cur_purchases
-        month_end = merchant.max_day if merchant.max_day else days_in_month[now.month]
-        remaining_secs_in_month = (datetime(now.year, now.month, month_end - 1) - now).total_seconds()
+        month_end = merchant.max_day if merchant.max_day else days_in_month[now.month] - 1
+        remaining_secs_in_month = (datetime(now.year, now.month, month_end) - now).total_seconds()
         average_gap = remaining_secs_in_month / remaining_purchases
 
         time_variance = merchant.spread_time_variance
@@ -429,7 +429,6 @@ if __name__ == '__main__':
 
 '''
 TODO
-Windows support
 Ensure days_in_month usage is always -1
 Check for internet connection post wake-up before bursting
 
