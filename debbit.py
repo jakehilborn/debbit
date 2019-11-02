@@ -79,7 +79,7 @@ def burst_loop(merchant):
             function_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
             for _ in range(loop_count - 1):
                 sleep_time = 30
-                logging.info('Sleeping ' + str(sleep_time) + ' seconds before next ' + merchant.name + ' purchase')
+                logging.info('Waiting ' + str(sleep_time) + ' seconds before next ' + merchant.name + ' purchase')
                 time.sleep(sleep_time)
                 function_wrapper(merchant)
 
@@ -429,9 +429,5 @@ if __name__ == '__main__':
 
 '''
 TODO
-Ensure days_in_month usage is always -1
 Check for internet connection post wake-up before bursting
-
-Look into why next burst is showing late into beginning of month, yet before min_day
-    INFO: 2019-10-30 21:03:40,348 Bursting next 3 xfinity_bill_pay purchases after 2019-11-01 08:32PM
 '''
