@@ -222,108 +222,102 @@ def record_transaction(merchant_name, amount):
 
 
 def amazon_gift_card_reload(driver, merchant, amount):
-    logging.info('Running ' + merchant.name + ' now')
+    logging.info('Spending ' + amount + ' cents with ' + merchant.name + ' now')
 
-    # driver.get('https://www.amazon.com/asv/reload/order?ref_=gcui_b_e_rb_c_d_b_x')
-    # driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continastststue')]").click()
-    #
-    # WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
-    # driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
-    # driver.find_element_by_id('ap_email').send_keys(merchant.usr)
-    #
-    # try:  # a/b tested new UI flow
-    #     driver.find_element_by_id('continue').click()  # if not exists, throw exception
-    # except common.exceptions.NoSuchElementException:  # a/b tested old UI flow
-    #     pass
-    #
-    # WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'ap_password')))
-    # driver.find_element_by_id('ap_password').send_keys(merchant.psw)
-    # driver.find_element_by_id('signInSubmit').click()
-    #
-    # try:  # OTP email validation
-    #     WebDriverWait(driver, 3).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
-    #     otp_flow = True
-    # except TimeoutException:
-    #     otp_flow = False
-    #
-    # if otp_flow:
-    #     driver.find_element_by_id('continue').click()
-    #
-    #     WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input")))
-    #     sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
-    #     logging.info(sent_to_text)
-    #     logging.info('Enter OTP here:')
-    #     otp = input()
-    #
-    #     elem = driver.find_element_by_xpath("//input")
-    #     elem.send_keys(otp)
-    #     elem.send_keys(Keys.TAB)
-    #     elem.send_keys(Keys.ENTER)
-    #
-    # WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
-    # driver.find_element_by_id('asv-manual-reload-amount').send_keys(cents_to_str(amount))
-    # driver.find_element_by_xpath("//span[contains(text(),'ending in " + str(merchant.card)[-4:] + "')]").click()
-    # driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
-    #
-    # time.sleep(10)  # give page a chance to load
-    # if 'thank-you' not in driver.current_url:
-    #     logging.info('starting amazon_gift_card_reload cc verification, waiting for input field')
-    #     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")))
-    #     elem = driver.find_element_by_xpath("//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")
-    #     elem.send_keys(str(merchant.card))
-    #     elem.send_keys(Keys.TAB)
-    #     elem.send_keys(Keys.ENTER)
-    #     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
-    #     time.sleep(1)
-    #     driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
-    #     time.sleep(10)  # give page a chance to load
-    #
-    # if 'thank-you' not in driver.current_url:
-    #     logging.error('Unexpected amazon_gift_card_reload failure, NOT scheduling any future purchases')
-    #     return
+    driver.get('https://www.amazon.com/asv/reload/order?ref_=gcui_b_e_rb_c_d_b_x')
+    driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continastststue')]").click()
+
+    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
+    driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
+    driver.find_element_by_id('ap_email').send_keys(merchant.usr)
+
+    try:  # a/b tested new UI flow
+        driver.find_element_by_id('continue').click()  # if not exists, exception is raised
+    except common.exceptions.NoSuchElementException:  # a/b tested old UI flow
+        pass
+
+    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'ap_password')))
+    driver.find_element_by_id('ap_password').send_keys(merchant.psw)
+    driver.find_element_by_id('signInSubmit').click()
+
+    try:  # OTP email validation
+        WebDriverWait(driver, 3).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
+        otp_flow = True
+    except TimeoutException:
+        otp_flow = False
+
+    if otp_flow:
+        driver.find_element_by_id('continue').click()
+
+        WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input")))
+        sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
+        logging.info(sent_to_text)
+        logging.info('Enter OTP here:')
+        otp = input()
+
+        elem = driver.find_element_by_xpath("//input")
+        elem.send_keys(otp)
+        elem.send_keys(Keys.TAB)
+        elem.send_keys(Keys.ENTER)
+
+    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
+    driver.find_element_by_id('asv-manual-reload-amount').send_keys(cents_to_str(amount))
+    driver.find_element_by_xpath("//span[contains(text(),'ending in " + str(merchant.card)[-4:] + "')]").click()
+    driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
+
+    time.sleep(10)  # give page a chance to load
+    if 'thank-you' not in driver.current_url:
+        logging.info('starting amazon_gift_card_reload cc verification, waiting for input field')
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")))
+        elem = driver.find_element_by_xpath("//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")
+        elem.send_keys(str(merchant.card))
+        elem.send_keys(Keys.TAB)
+        elem.send_keys(Keys.ENTER)
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
+        time.sleep(1)
+        driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
+        time.sleep(10)  # give page a chance to load
+
+    if 'thank-you' not in driver.current_url:
+        logging.error('Unexpected amazon_gift_card_reload failure, NOT scheduling any future purchases')  # TODO this case needs to be fixed
 
 
 def xfinity_bill_pay(driver, merchant, amount):
-    logging.info('Running ' + merchant.name + ' now')
+    logging.info('Spending ' + amount + ' cents with ' + merchant.name + ' now')
 
-    # amount = random.randint(merchant.amount_min, merchant.amount_max)
-    #
-    # driver.get('https://customer.xfinity.com/#/billing/payment')
-    #
-    # WebDriverWait(driver, 90).until(expected_conditions.element_to_be_clickable((By.ID, 'user')))
-    #
-    # driver.find_element_by_id('user').send_keys(merchant.usr)
-    # driver.find_element_by_id('passwd').send_keys(merchant.psw)
-    # driver.find_element_by_id('sign_in').click()
-    #
-    # WebDriverWait(driver, 90).until(expected_conditions.element_to_be_clickable((By.ID, 'customAmount')))
-    #
-    # try:  # survey pop-up
-    #     driver.find_element_by_id('no').click()
-    # except common.exceptions.NoSuchElementException:
-    #     pass
-    #
-    # cur_balance = driver.find_element_by_xpath("//span[contains(text(), '$')]").text
-    # if int(''.join([c for c in cur_balance if c.isdigit()])) == 0:  # $77.84 -> 7784
-    #     logging.error('xfinity balance is zero, skipping all payments for remainder of month')
-    #     schedule_next(merchant, 999)
-    # elif int(''.join([c for c in cur_balance if c.isdigit()])) < amount:
-    #     amount = int(cur_balance[1:-3] + cur_balance[-2:])
-    #
-    # driver.find_element_by_id('customAmount').send_keys(cents_to_str(amount))
-    # driver.find_element_by_xpath("//span[contains(text(),'nding in " + str(merchant.card)[-4:] + "')]").click()
-    # driver.find_element_by_xpath("//span[contains(text(),'nding in " + str(merchant.card)[-4:] + "')]").click()
-    # driver.find_element_by_xpath("//button[contains(text(),'Continue')]").click()
-    # driver.find_element_by_xpath("//button[contains(text(),'Submit Payment')]").click()
-    #
-    # try:
-    #     WebDriverWait(driver, 90).until(expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'Your payment was successful')]")))
-    # except TimeoutException:
-    #     logging.error('Unexpected xfinity_bill_pay failure, NOT scheduling any future purchases')
-    #     return
-    #
-    # cur_purchases = record_transaction(merchant.name, amount)
-    # schedule_next(merchant, cur_purchases)
+    driver.get('https://customer.xfinity.com/#/billing/payment')
+
+    WebDriverWait(driver, 90).until(expected_conditions.element_to_be_clickable((By.ID, 'user')))
+
+    driver.find_element_by_id('user').send_keys(merchant.usr)
+    driver.find_element_by_id('passwd').send_keys(merchant.psw)
+    driver.find_element_by_id('sign_in').click()
+
+    WebDriverWait(driver, 90).until(expected_conditions.element_to_be_clickable((By.ID, 'customAmount')))
+
+    try:  # survey pop-up
+        driver.find_element_by_id('no').click()
+    except common.exceptions.NoSuchElementException:
+        pass
+
+    cur_balance = driver.find_element_by_xpath("//span[contains(text(), '$')]").text
+    if int(''.join([c for c in cur_balance if c.isdigit()])) == 0:  # $77.84 -> 7784
+        logging.error('xfinity balance is zero, skipping all payments for remainder of month')
+        # schedule_next(merchant)  # TODO this case needs to be fixed
+        return
+    elif int(''.join([c for c in cur_balance if c.isdigit()])) < amount:
+        amount = int(cur_balance[1:-3] + cur_balance[-2:])
+
+    driver.find_element_by_id('customAmount').send_keys(cents_to_str(amount))
+    driver.find_element_by_xpath("//span[contains(text(),'nding in " + str(merchant.card)[-4:] + "')]").click()
+    driver.find_element_by_xpath("//span[contains(text(),'nding in " + str(merchant.card)[-4:] + "')]").click()
+    driver.find_element_by_xpath("//button[contains(text(),'Continue')]").click()
+    driver.find_element_by_xpath("//button[contains(text(),'Submit Payment')]").click()
+
+    try:
+        WebDriverWait(driver, 90).until(expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'Your payment was successful')]")))
+    except TimeoutException:
+        logging.error('Unexpected xfinity_bill_pay failure, NOT scheduling any future purchases')  # TODO this case needs to be fixed
 
 
 def formatted_date_of_offset(now, start_offset):
@@ -432,4 +426,5 @@ if __name__ == '__main__':
 '''
 TODO
 Check for internet connection post wake-up before bursting
+Unexpected failures should not schedule_next
 '''
