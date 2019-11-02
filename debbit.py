@@ -34,7 +34,7 @@ def main():
         return
 
     load_merchant('amazon_gift_card_reload', amazon_gift_card_reload),
-    load_merchant('xfinity_bill_pay', xfinity_bill_pay)
+    # load_merchant('xfinity_bill_pay', xfinity_bill_pay)
 
 
 def load_state(year, month):
@@ -222,11 +222,9 @@ def record_transaction(merchant_name, amount):
 
 
 def amazon_gift_card_reload(driver, merchant, amount):
-    logging.info('Spending ' + amount + ' cents with ' + merchant.name + ' now')
+    logging.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
 
-    driver.get('https://www.amazon.com/asv/reload/order?ref_=gcui_b_e_rb_c_d_b_x')
-    driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continastststue')]").click()
-
+    driver.get('https://www.amazon.com/asv/reload/order')
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
     driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
     driver.find_element_by_id('ap_email').send_keys(merchant.usr)
@@ -267,7 +265,6 @@ def amazon_gift_card_reload(driver, merchant, amount):
 
     time.sleep(10)  # give page a chance to load
     if 'thank-you' not in driver.current_url:
-        logging.info('starting amazon_gift_card_reload cc verification, waiting for input field')
         WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")))
         elem = driver.find_element_by_xpath("//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")
         elem.send_keys(str(merchant.card))
@@ -283,7 +280,7 @@ def amazon_gift_card_reload(driver, merchant, amount):
 
 
 def xfinity_bill_pay(driver, merchant, amount):
-    logging.info('Spending ' + amount + ' cents with ' + merchant.name + ' now')
+    logging.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
 
     driver.get('https://customer.xfinity.com/#/billing/payment')
 
