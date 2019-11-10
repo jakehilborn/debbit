@@ -4,8 +4,10 @@ import os
 import random
 import time
 import traceback
+import sys
 from datetime import datetime
 from datetime import timedelta
+from enum import Enum
 from threading import Timer, Lock, Thread
 
 import yaml
@@ -34,7 +36,7 @@ def main():
         return
 
     load_merchant('amazon_gift_card_reload', amazon_gift_card_reload),
-    # load_merchant('xfinity_bill_pay', xfinity_bill_pay)
+    load_merchant('xfinity_bill_pay', xfinity_bill_pay)
 
 
 def load_state(year, month):
@@ -52,7 +54,7 @@ def load_merchant(name, function):
     if name not in config:
         return
 
-    if config[name]['enabled'] == True:
+    if config[name]['enabled'] == True:  # need this to be explicitly set to True, not just any truthy value
         merchant = Merchant(name, function, config[name])
 
         if config['mode'] == 'spread':
@@ -66,6 +68,8 @@ def load_merchant(name, function):
 def burst_loop(merchant):
     suppress_logs = False
     burst_gap = merchant.burst_min_gap
+    skip_time = datetime.fromtimestamp(0)
+
     while True:
         now = datetime.now()
         state = load_state(now.year, now.month)
@@ -80,28 +84,35 @@ def burst_loop(merchant):
         if prev_burst_time < int(now.timestamp()) - burst_gap \
                 and now.day >= merchant.min_day \
                 and now.day <= (merchant.max_day if merchant.max_day else days_in_month[now.month] - 1) \
-                and cur_purchases < merchant.total_purchases:
+                and cur_purchases < merchant.total_purchases \
+                and now > skip_time:
 
             loop_count = min(merchant.burst_count, merchant.total_purchases - cur_purchases)
             logging.info('Now bursting ' + str(loop_count) + ' ' + merchant.name + ' ' + plural('purchase', loop_count))
 
-            function_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
+            result = function_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
             for _ in range(loop_count - 1):
+                if result != Result.success:
+                    break
                 sleep_time = 30
                 logging.info('Waiting ' + str(sleep_time) + ' seconds before next ' + merchant.name + ' purchase')
                 time.sleep(sleep_time)
-                function_wrapper(merchant)
+                result = function_wrapper(merchant)
 
             burst_gap = merchant.burst_min_gap + random.randint(0, int(merchant.burst_time_variance))
+
+            if result == Result.skipped:
+                skip_time = now + timedelta(days=1)
+
             suppress_logs = False
         elif not suppress_logs:
-            log_next_burst_time(merchant, now, prev_burst_time, burst_gap, cur_purchases)
+            log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cur_purchases)
             suppress_logs = True
         else:
             time.sleep(300)
 
 
-def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, cur_purchases):
+def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cur_purchases):
     prev_burst_plus_gap_dt = datetime.fromtimestamp(prev_burst_time + burst_gap)
     cur_month_min_day_dt = datetime(now.year, now.month, merchant.min_day)
 
@@ -120,6 +131,9 @@ def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, cur_purchases
         next_burst = prev_burst_plus_gap_dt if prev_burst_plus_gap_dt > next_month_min_day_dt else next_month_min_day_dt
     else:
         next_burst = prev_burst_plus_gap_dt
+
+    if next_burst < skip_time:
+        next_burst = skip_time
 
     logging.info('Bursting next ' + str(merchant.burst_count) + ' ' + merchant.name + ' ' + plural('purchase', merchant.burst_count) + ' after ' + next_burst.strftime("%Y-%m-%d %I:%M%p"))
 
@@ -276,7 +290,9 @@ def amazon_gift_card_reload(driver, merchant, amount):
         time.sleep(10)  # give page a chance to load
 
     if 'thank-you' not in driver.current_url:
-        logging.error('Unexpected amazon_gift_card_reload failure, NOT scheduling any future purchases')  # TODO this case needs to be fixed
+        return Result.unverified
+
+    return Result.success
 
 
 def xfinity_bill_pay(driver, merchant, amount):
@@ -299,9 +315,8 @@ def xfinity_bill_pay(driver, merchant, amount):
 
     cur_balance = driver.find_element_by_xpath("//span[contains(text(), '$')]").text
     if int(''.join([c for c in cur_balance if c.isdigit()])) == 0:  # $77.84 -> 7784
-        logging.error('xfinity balance is zero, skipping all payments for remainder of month')
-        # schedule_next(merchant)  # TODO this case needs to be fixed
-        return
+        logging.error('xfinity balance is zero, will try again later.')
+        return Result.skipped
     elif int(''.join([c for c in cur_balance if c.isdigit()])) < amount:
         amount = int(cur_balance[1:-3] + cur_balance[-2:])
 
@@ -314,7 +329,9 @@ def xfinity_bill_pay(driver, merchant, amount):
     try:
         WebDriverWait(driver, 90).until(expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'Your payment was successful')]")))
     except TimeoutException:
-        logging.error('Unexpected xfinity_bill_pay failure, NOT scheduling any future purchases')  # TODO this case needs to be fixed
+        return Result.unverified
+
+    return Result.success
 
 
 def formatted_date_of_offset(now, start_offset):
@@ -338,7 +355,7 @@ def function_wrapper(merchant):
     while failures < threshold:
         amount = random.randint(merchant.amount_min, merchant.amount_max)
         try:
-            merchant.function(driver, merchant, amount)
+            result = merchant.function(driver, merchant, amount)
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception as e:
@@ -346,20 +363,26 @@ def function_wrapper(merchant):
             failures += 1
 
             record_failure(driver, merchant.name)
+            driver.close()
 
             if failures < threshold:
                 logging.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.name + ' attempts done, trying again in ' + str(failures * 60) + ' seconds')
                 time.sleep(failures * 60)
                 continue
             else:
-                driver.close()
                 error_msg = merchant.name + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run this program to try again.'
                 logging.error(error_msg)
                 raise Exception(error_msg) from e
 
-        record_transaction(merchant.name, amount)
         driver.close()
-        return
+
+        if result == Result.success:
+            record_transaction(merchant.name, amount)
+        elif result == Result.unverified:
+            logging.error('Unable to verify ' + merchant.name + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run this program to try again.')
+            sys.exit(1)  # exits this merchant's thread, not entire program
+
+        return result
 
 
 def record_failure(driver, function_name):
@@ -387,6 +410,12 @@ def plural(word, count):
     if count == 1:
         return word
     return word + 's'
+
+
+class Result(Enum):
+    success = 'success',
+    skipped = 'skipped',
+    unverified = 'unverified'
 
 
 class Merchant:
@@ -423,5 +452,7 @@ if __name__ == '__main__':
 '''
 TODO
 Check for internet connection post wake-up before bursting
-Unexpected failures should not schedule_next
+Stopping initial burst means that upon re-run, the entire burst count will happen again.
+OTP input is obscured by concurrent logging output
+Dump stack trace in failures directory
 '''
