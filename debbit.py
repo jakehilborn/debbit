@@ -375,7 +375,7 @@ def function_wrapper(merchant):
             logging.error(merchant.name + ' error: ' + traceback.format_exc())
             failures += 1
 
-            record_failure(driver, merchant.name)
+            record_failure(driver, merchant.name, traceback.format_exc(), merchant)
             driver.close()
 
             if failures < threshold:
@@ -398,9 +398,10 @@ def function_wrapper(merchant):
         return result
 
 
-def record_failure(driver, function_name):
+def record_failure(driver, function_name, error_msg, merchant):
     now = datetime.now()
     dom = driver.execute_script('return document.documentElement.outerHTML')
+    dom = scrub_sensitive_data(dom, merchant.name)
 
     if not os.path.exists('failures'):
         os.mkdir('failures')
@@ -411,6 +412,20 @@ def record_failure(driver, function_name):
 
     with open(filename + '.html', 'w') as f:
         f.write(dom)
+
+    with open(filename + '.txt', 'w') as f:
+        f.write(error_msg)
+
+
+def scrub_sensitive_data(data, merchant_name):
+    if not data:
+        return data
+
+    return data\
+        .replace(str(config[merchant_name]['usr']), '***usr***')\
+        .replace(str(config[merchant_name]['psw']), '***psw***')\
+        .replace(str(config[merchant_name]['card']), '***card***')\
+        .replace(str(config[merchant_name]['card'])[-4:], '***card***')  # last 4 digits of card
 
 
 def get_webdriver():
@@ -465,7 +480,6 @@ if __name__ == '__main__':
 '''
 TODO
 Check for internet connection post wake-up before bursting
-Stopping initial burst means that upon re-run, the entire burst count will happen again.
 OTP input is obscured by concurrent logging output
-Dump stack trace in failures directory
+Handle usr/psw which might be non-strings
 '''
