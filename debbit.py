@@ -287,14 +287,14 @@ def amazon_gift_card_reload(driver, merchant, amount):
 
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
     driver.find_element_by_id('asv-manual-reload-amount').send_keys(cents_to_str(amount))
-    driver.find_element_by_xpath("//span[contains(text(),'ending in " + str(merchant.card)[-4:] + "')]").click()
+    driver.find_element_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]").click()
     driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
 
     time.sleep(10)  # give page a chance to load
     if 'thank-you' not in driver.current_url:
-        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")))
-        elem = driver.find_element_by_xpath("//input[@placeholder='ending in " + str(merchant.card)[-4:] + "']")
-        elem.send_keys(str(merchant.card))
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + merchant.card[-4:] + "']")))
+        elem = driver.find_element_by_xpath("//input[@placeholder='ending in " + merchant.card[-4:] + "']")
+        elem.send_keys(merchant.card)
         elem.send_keys(Keys.TAB)
         elem.send_keys(Keys.ENTER)
         WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
@@ -334,8 +334,8 @@ def xfinity_bill_pay(driver, merchant, amount):
         amount = int(cur_balance[1:-3] + cur_balance[-2:])
 
     driver.find_element_by_id('customAmount').send_keys(cents_to_str(amount))
-    driver.find_element_by_xpath("//span[contains(text(),'nding in " + str(merchant.card)[-4:] + "')]").click()
-    driver.find_element_by_xpath("//span[contains(text(),'nding in " + str(merchant.card)[-4:] + "')]").click()
+    driver.find_element_by_xpath("//span[contains(text(),'nding in " + merchant.card[-4:] + "')]").click()
+    driver.find_element_by_xpath("//span[contains(text(),'nding in " + merchant.card[-4:] + "')]").click()
     driver.find_element_by_xpath("//button[contains(text(),'Continue')]").click()
     driver.find_element_by_xpath("//button[contains(text(),'Submit Payment')]").click()
 
@@ -401,7 +401,7 @@ def function_wrapper(merchant):
 def record_failure(driver, function_name, error_msg, merchant):
     now = datetime.now()
     dom = driver.execute_script('return document.documentElement.outerHTML')
-    dom = scrub_sensitive_data(dom, merchant.name)
+    dom = scrub_sensitive_data(dom, merchant)
 
     if not os.path.exists('failures'):
         os.mkdir('failures')
@@ -417,15 +417,15 @@ def record_failure(driver, function_name, error_msg, merchant):
         f.write(error_msg)
 
 
-def scrub_sensitive_data(data, merchant_name):
+def scrub_sensitive_data(data, merchant):
     if not data:
         return data
 
     return data\
-        .replace(str(config[merchant_name]['usr']), '***usr***')\
-        .replace(str(config[merchant_name]['psw']), '***psw***')\
-        .replace(str(config[merchant_name]['card']), '***card***')\
-        .replace(str(config[merchant_name]['card'])[-4:], '***card***')  # last 4 digits of card
+        .replace(merchant.usr, '***usr***')\
+        .replace(merchant.psw, '***psw***')\
+        .replace(merchant.card, '***card***')\
+        .replace(merchant.card[-4:], '***card***')  # last 4 digits of card
 
 
 def get_webdriver():
@@ -461,9 +461,9 @@ class Merchant:
         self.spread_time_variance = config_entry['spread']['time_variance']
         self.min_day = config_entry['min_day']
         self.max_day = config_entry['max_day']
-        self.usr = config_entry['usr']
-        self.psw = config_entry['psw']
-        self.card = config_entry['card']
+        self.usr = str(config_entry['usr'])
+        self.psw = str(config_entry['psw'])
+        self.card = str(config_entry['card'])
 
 
 if __name__ == '__main__':
