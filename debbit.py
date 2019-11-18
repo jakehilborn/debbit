@@ -86,9 +86,9 @@ def burst_loop(merchant):
             else:
                 prev_burst_time = state[merchant.name]['transactions'][merchant.burst_count * -1]['unix_time']
 
-            for transaction in state[merchant.name]['transactions'][:min(len(state[merchant.name]['transactions']), merchant.burst_count)]:
-                if transaction['unix_time'] > int(now.timestamp()) - merchant.burst_min_gap:
-                    this_burst_count -= 1  # Program was stopped during burst, count how many occurred within the last partial burst
+            for transaction in state[merchant.name]['transactions'][-min(len(state[merchant.name]['transactions']), merchant.burst_count):]:
+                if transaction['unix_time'] > int(now.timestamp()) - min(merchant.burst_min_gap, 3600):
+                    this_burst_count -= 1  # Program was stopped during burst within 60 minutes ago, count how many occurred within the last partial burst
 
         this_burst_count = min(this_burst_count, merchant.total_purchases - cur_purchases)
 
@@ -481,5 +481,5 @@ if __name__ == '__main__':
 TODO
 Check for internet connection post wake-up before bursting
 OTP input is obscured by concurrent logging output
-Handle usr/psw which might be non-strings
+Stopping and resuming burst should be a partial burst
 '''
