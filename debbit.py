@@ -399,22 +399,26 @@ def function_wrapper(merchant):
 
 
 def record_failure(driver, function_name, error_msg, merchant):
-    now = datetime.now()
-    dom = driver.execute_script('return document.documentElement.outerHTML')
-    dom = scrub_sensitive_data(dom, merchant)
-
     if not os.path.exists('failures'):
         os.mkdir('failures')
 
-    filename = os.path.join('failures', now.strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + function_name)
-
-    driver.save_screenshot(filename + '.png')
-
-    with open(filename + '.html', 'w') as f:
-        f.write(dom)
+    filename = os.path.join('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + function_name)
 
     with open(filename + '.txt', 'w') as f:
         f.write(error_msg)
+
+    try:
+        driver.save_screenshot(filename + '.png')
+
+        dom = driver.execute_script('return document.documentElement.outerHTML')
+        dom = scrub_sensitive_data(dom, merchant)
+
+        with open(filename + '.html', 'w') as f:
+            f.write(dom)
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception as e:
+        logging.error('record_failure error: ' + traceback.format_exc())
 
 
 def scrub_sensitive_data(data, merchant):
@@ -481,5 +485,7 @@ if __name__ == '__main__':
 TODO
 Check for internet connection post wake-up before bursting
 OTP input is obscured by concurrent logging output
-Stopping and resuming burst should be a partial burst
+Stopping and resuming burst should be a partial burst: I think this works now, test it out
+First time run of the month should have some intro message about "no transactions made yet"
+Merchants should run serially to prevent mixing output - especially for input() calls
 '''
