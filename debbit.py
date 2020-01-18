@@ -21,20 +21,21 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 
 def main():
-    logging.basicConfig(format='%(levelname)s: %(asctime)s %(message)s', level=logging.INFO)
-
-    now = datetime.now()
-    state = load_state(now.year, now.month)
-
-    for merchant_name in state:
-        cur_purchases = state[merchant_name]['purchase_count']
-        logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
-    print()
-
     if config['mode'] != 'burst' and config['mode'] != 'spread':
         logging.error('Set config.txt "mode" to burst or spread')
         return
 
+    now = datetime.now()
+    state = load_state(now.year, now.month)
+
+    if not state:
+        logging.info('No purchases yet complete for ' + now.strftime('%B %Y'))
+
+    for merchant_name in state:
+        cur_purchases = state[merchant_name]['purchase_count']
+        logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
+
+    print()
     load_merchant('amazon_gift_card_reload', amazon_gift_card_reload),
     load_merchant('xfinity_bill_pay', xfinity_bill_pay)
 
@@ -251,6 +252,8 @@ def record_transaction(merchant_name, amount):
 def amazon_gift_card_reload(driver, merchant, amount):
     logging.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
 
+    return Result.success
+
     driver.get('https://www.amazon.com/asv/reload/order')
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
     driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
@@ -310,6 +313,8 @@ def amazon_gift_card_reload(driver, merchant, amount):
 
 def xfinity_bill_pay(driver, merchant, amount):
     logging.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
+
+    return Result.success
 
     driver.get('https://customer.xfinity.com/#/billing/payment')
 
@@ -479,11 +484,21 @@ class Merchant:
 
 
 if __name__ == '__main__':
+    print('       __     __    __    _ __ ')
+    print('  ____/ /__  / /_  / /_  (_) /_')
+    print(' / __  / _ \/ __ \/ __ \/ / __/')
+    print('/ /_/ /  __/ /_/ / /_/ / / /_  ')
+    print('\__,_/\___/_.___/_.___/_/\__/  ')
+
+    # set up global constants
+    logging.basicConfig(format='%(levelname)s: %(asctime)s %(message)s', level=logging.INFO)
+
     try:
         with open('config.txt', 'r') as config_f:
             config = yaml.safe_load(config_f.read())
     except FileNotFoundError:
-        logging.error('Please create a config.txt file')
+        logging.error('config.txt not found. Please copy and rename sample_config.txt to config.txt. Then, put your credentials and debit card info in config.txt.')
+        sys.exit(1)
 
     state_write_lock = Lock()
     days_in_month = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
@@ -491,8 +506,6 @@ if __name__ == '__main__':
 
 '''
 TODO
+
 Check for internet connection post wake-up before bursting
-Stopping and resuming burst should be a partial burst: I think this works now, test it out
-First time run of the month should have some intro message about "no transactions made yet"
-Merchants should run serially to prevent mixing output - especially for input() calls
 '''
