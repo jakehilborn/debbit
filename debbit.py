@@ -10,7 +10,7 @@ from datetime import timedelta
 from enum import Enum
 from threading import Timer, Lock, Thread
 
-import yaml
+import yaml  # PyYAML
 from selenium import webdriver, common
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -361,11 +361,10 @@ def cents_to_str(cents):
 
 
 def function_wrapper(merchant):
-    driver = get_webdriver()
-
     failures = 0
     threshold = 5
     while failures < threshold:
+        driver = get_webdriver()
         amount = random.randint(merchant.amount_min, merchant.amount_max)
         try:
             result = merchant.function(driver, merchant, amount)
@@ -376,18 +375,18 @@ def function_wrapper(merchant):
             failures += 1
 
             record_failure(driver, merchant.name, traceback.format_exc(), merchant)
-            driver.close()
+            close_webdriver(driver)
 
             if failures < threshold:
-                logging.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.name + ' attempts done, trying again in ' + str(failures * 60) + ' seconds')
-                time.sleep(failures * 60)
+                logging.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.name + ' attempts done, trying again in ' + str(60 * failures ** 4) + ' seconds')
+                time.sleep(60 * failures ** 4)  # try again in 1min, 16min, 1.3hr, 4.3hr, 10.4hr
                 continue
             else:
                 error_msg = merchant.name + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run this program to try again.'
                 logging.error(error_msg)
                 raise Exception(error_msg) from e
 
-        driver.close()
+        close_webdriver(driver)
 
         if result == Result.success:
             record_transaction(merchant.name, amount)
@@ -438,6 +437,15 @@ def get_webdriver():
     return webdriver.Firefox(options=options, executable_path='geckodriver')
 
 
+def close_webdriver(driver):
+    try:
+        driver.close()
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
+        pass
+
+
 def plural(word, count):
     if count == 1:
         return word
@@ -484,7 +492,6 @@ if __name__ == '__main__':
 '''
 TODO
 Check for internet connection post wake-up before bursting
-OTP input is obscured by concurrent logging output
 Stopping and resuming burst should be a partial burst: I think this works now, test it out
 First time run of the month should have some intro message about "no transactions made yet"
 Merchants should run serially to prevent mixing output - especially for input() calls
