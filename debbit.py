@@ -35,7 +35,7 @@ def main():
         cur_purchases = state[merchant_name]['purchase_count']
         logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
 
-    print()
+    logging.info('')
     load_merchant('amazon_gift_card_reload', amazon_gift_card_reload),
     load_merchant('xfinity_bill_pay', xfinity_bill_pay)
 
@@ -204,7 +204,7 @@ def schedule_next(merchant):
 
     start_offset = random.randint(int(range_min), int(range_max))
     logging.info('Scheduling next ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
-    print()
+    logging.info('')
     Timer(start_offset, spread_recursion, [merchant]).start()
 
 
@@ -480,15 +480,21 @@ class Merchant:
 
 
 if __name__ == '__main__':
-    print('       __     __    __    _ __ ')
-    print('  ____/ /__  / /_  / /_  (_) /_')
-    print(' / __  / _ \/ __ \/ __ \/ / __/')
-    print('/ /_/ /  __/ /_/ / /_/ / / /_  ')
-    print('\__,_/\___/_.___/_.___/_/\__/  ')
+    # configure logger
+    log_format = '%(levelname)s: %(asctime)s %(message)s'
+    logging.basicConfig(format=log_format, level=logging.INFO)
+    handler = logging.FileHandler('debbit_log.log')
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(handler)
 
-    # set up global constants
-    logging.basicConfig(format='%(levelname)s: %(asctime)s %(message)s', level=logging.INFO)
+    logging.info('       __     __    __    _ __ ')
+    logging.info('  ____/ /__  / /_  / /_  (_) /_')
+    logging.info(' / __  / _ \/ __ \/ __ \/ / __/')
+    logging.info('/ /_/ /  __/ /_/ / /_/ / / /_  ')
+    logging.info('\__,_/\___/_.___/_.___/_/\__/  v1.0-dev')
 
+    # configure global constants
     try:
         with open('config.txt', 'r') as config_f:
             config = yaml.safe_load(config_f.read())
@@ -504,5 +510,4 @@ if __name__ == '__main__':
 TODO
 
 Check for internet connection post wake-up before bursting
-Use logger instead of print for banner
 '''
