@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import logging
 import os
-import pathlib
 import random
 import time
 import traceback
@@ -43,7 +42,7 @@ def main():
 
 def load_state(year, month):
     padded_month = '0' + str(month) if month < 10 else str(month)
-    filename = os.path.join('state', 'debbit_' + str(year) + '_' + padded_month + '.txt')
+    filename = absolute_path('state', 'debbit_' + str(year) + '_' + padded_month + '.txt')
 
     try:
         with open(filename, 'r', encoding='utf-8') as f:
@@ -218,11 +217,11 @@ def record_transaction(merchant_name, amount):
     now = datetime.now()
     logging.info('Recording successful ' + merchant_name + ' purchase')
 
-    if not os.path.exists('state'):
-        os.mkdir('state')
+    if not os.path.exists(absolute_path('state')):
+        os.mkdir(absolute_path('state'))
 
     padded_month = '0' + str(now.month) if now.month < 10 else str(now.month)
-    filename = os.path.join('state', 'debbit_' + str(now.year) + '_' + padded_month + '.txt')
+    filename = absolute_path('state', 'debbit_' + str(now.year) + '_' + padded_month + '.txt')
 
     state_write_lock.acquire()
 
@@ -400,10 +399,10 @@ def function_wrapper(merchant):
 
 
 def record_failure(driver, function_name, error_msg, merchant):
-    if not os.path.exists('failures'):
-        os.mkdir('failures')
+    if not os.path.exists(absolute_path('failures')):
+        os.mkdir(absolute_path('failures'))
 
-    filename = os.path.join('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + function_name)
+    filename = absolute_path('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + function_name)
 
     with open(filename + '.txt', 'w', encoding='utf-8') as f:
         f.write(error_msg)
@@ -437,7 +436,7 @@ def get_webdriver():
     options = Options()
     options.headless = config['hide_web_browser']
     try:
-        return webdriver.Firefox(options=options, executable_path=os.path.join(pathlib.Path('__file__').parent.absolute(), 'geckodriver'))
+        return webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'))
     except SessionNotCreatedException:
         logging.error('Firefox not found. Please install the latest version of Firefox and try again.')
         logging.debug(traceback.format_exc())
@@ -451,6 +450,11 @@ def close_webdriver(driver):
         raise
     except Exception:
         pass
+
+
+def absolute_path(*rel_paths):  # works cross platform when running source script or Pyinstaller binary
+    script_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath('__file__')
+    return os.path.join(os.path.dirname(script_path), *rel_paths)
 
 
 def plural(word, count):
@@ -509,7 +513,7 @@ if __name__ == '__main__':
 
     # configure global constants
     try:
-        with open('config.txt', 'r', encoding='utf-8') as config_f:
+        with open(absolute_path('config.txt'), 'r', encoding='utf-8') as config_f:
             config = yaml.safe_load(config_f.read())
     except FileNotFoundError:
         logging.error('config.txt not found. Please copy and rename sample_config.txt to config.txt. Then, put your credentials and debit card info in config.txt.')
@@ -523,5 +527,4 @@ if __name__ == '__main__':
 TODO
 
 Check for internet connection post wake-up before bursting
-Fix platform specific geckodriver paths
 '''
