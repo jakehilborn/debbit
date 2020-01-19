@@ -252,8 +252,6 @@ def record_transaction(merchant_name, amount):
 def amazon_gift_card_reload(driver, merchant, amount):
     logging.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
 
-    return Result.success
-
     driver.get('https://www.amazon.com/asv/reload/order')
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
     driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
@@ -313,8 +311,6 @@ def amazon_gift_card_reload(driver, merchant, amount):
 
 def xfinity_bill_pay(driver, merchant, amount):
     logging.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
-
-    return Result.success
 
     driver.get('https://customer.xfinity.com/#/billing/payment')
 
@@ -508,4 +504,5 @@ if __name__ == '__main__':
 TODO
 
 Check for internet connection post wake-up before bursting
+Use logger instead of print for banner
 '''
