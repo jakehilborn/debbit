@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import logging
 import os
+import pathlib
 import random
 import time
 import traceback
@@ -12,7 +13,7 @@ from threading import Timer, Lock, Thread
 
 import yaml  # PyYAML
 from selenium import webdriver, common
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, SessionNotCreatedException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
@@ -45,7 +46,7 @@ def load_state(year, month):
     filename = os.path.join('state', 'debbit_' + str(year) + '_' + padded_month + '.txt')
 
     try:
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f.read())
     except FileNotFoundError:
         return {}
@@ -241,7 +242,7 @@ def record_transaction(merchant_name, amount):
         'unix_time': int(now.timestamp())
     })
 
-    with open(filename, 'w') as f:
+    with open(filename, 'w', encoding='utf-8') as f:
         f.write(yaml.dump(state))
 
     state_write_lock.release()
@@ -404,7 +405,7 @@ def record_failure(driver, function_name, error_msg, merchant):
 
     filename = os.path.join('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + function_name)
 
-    with open(filename + '.txt', 'w') as f:
+    with open(filename + '.txt', 'w', encoding='utf-8') as f:
         f.write(error_msg)
 
     try:
@@ -413,7 +414,7 @@ def record_failure(driver, function_name, error_msg, merchant):
         dom = driver.execute_script('return document.documentElement.outerHTML')
         dom = scrub_sensitive_data(dom, merchant)
 
-        with open(filename + '.html', 'w') as f:
+        with open(filename + '.html', 'w', encoding='utf-8') as f:
             f.write(dom)
     except (KeyboardInterrupt, SystemExit):
         raise
@@ -435,7 +436,12 @@ def scrub_sensitive_data(data, merchant):
 def get_webdriver():
     options = Options()
     options.headless = config['hide_web_browser']
-    return webdriver.Firefox(options=options, executable_path='geckodriver')
+    try:
+        return webdriver.Firefox(options=options, executable_path=os.path.join(pathlib.Path('__file__').parent.absolute(), 'geckodriver'))
+    except SessionNotCreatedException:
+        logging.error('Firefox not found. Please install the latest version of Firefox and try again.')
+        logging.debug(traceback.format_exc())
+        sys.exit(1)
 
 
 def close_webdriver(driver):
@@ -480,23 +486,30 @@ class Merchant:
 
 
 if __name__ == '__main__':
-    # configure logger
+    # configure loggers
+    logging.getLogger().setLevel(logging.DEBUG)
     log_format = '%(levelname)s: %(asctime)s %(message)s'
-    logging.basicConfig(format=log_format, level=logging.INFO)
-    handler = logging.FileHandler('debbit_log.log')
-    handler.setLevel(logging.INFO)
-    handler.setFormatter(logging.Formatter(log_format))
-    logging.getLogger().addHandler(handler)
+
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.INFO)
+    stdout_handler.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(stdout_handler)
+
+    file_handler = logging.FileHandler('debbit_log.log')
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(file_handler)
 
     logging.info('       __     __    __    _ __ ')
     logging.info('  ____/ /__  / /_  / /_  (_) /_')
     logging.info(' / __  / _ \/ __ \/ __ \/ / __/')
     logging.info('/ /_/ /  __/ /_/ / /_/ / / /_  ')
     logging.info('\__,_/\___/_.___/_.___/_/\__/  v1.0-dev')
+    logging.info('')
 
     # configure global constants
     try:
-        with open('config.txt', 'r') as config_f:
+        with open('config.txt', 'r', encoding='utf-8') as config_f:
             config = yaml.safe_load(config_f.read())
     except FileNotFoundError:
         logging.error('config.txt not found. Please copy and rename sample_config.txt to config.txt. Then, put your credentials and debit card info in config.txt.')
@@ -510,4 +523,5 @@ if __name__ == '__main__':
 TODO
 
 Check for internet connection post wake-up before bursting
+Fix platform specific geckodriver paths
 '''

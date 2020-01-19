@@ -1,4 +1,5 @@
 config.txt
+debbit_log.log
 state/
 failures/
 
