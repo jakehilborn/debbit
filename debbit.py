@@ -63,7 +63,7 @@ def load_merchant(name, function):
         if config['mode'] == 'burst':
             Thread(target=burst_loop, args=(merchant,)).start()
     else:
-        logging.info(name + ' disabled, set enabled: True to enable.')
+        logging.info(name + ' disabled, set enabled: True in config.txt to enable.')
 
 
 def burst_loop(merchant):
