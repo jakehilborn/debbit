@@ -9,6 +9,8 @@ geckodriver*
 .idea/
 notes.txt
 
+# pyinstaller
 __pycache__/
 build/
 dist/
+debbit.spec
