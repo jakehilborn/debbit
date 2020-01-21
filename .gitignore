@@ -8,3 +8,7 @@ geckodriver*
 .DS_Store
 .idea/
 notes.txt
+
+__pycache__/
+build/
+dist/
