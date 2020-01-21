@@ -320,6 +320,20 @@ def xfinity_bill_pay(driver, merchant, amount):
     driver.find_element_by_id('passwd').send_keys(merchant.psw)
     driver.find_element_by_id('sign_in').click()
 
+    try:  # first time run captcha
+        WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.ID, 'nucaptcha-answer')))
+        logging.info('captcha detected')
+        input('''
+Detected first time run captcha. Please follow these one-time steps. Future runs won't need this.
+
+1. Open the Firefox window that debbit created.
+2. Enter your user, pass, and the moving characters manually.
+3. Click the "Sign In" button.
+4. Click on this terminal window and hit "Enter" to continue running debbit.
+''')
+    except TimeoutException:
+        pass
+
     WebDriverWait(driver, 90).until(expected_conditions.element_to_be_clickable((By.ID, 'customAmount')))
 
     try:  # survey pop-up
@@ -438,6 +452,7 @@ def get_webdriver():
     try:
         return webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'))
     except SessionNotCreatedException:
+        logging.error('')
         logging.error('Firefox not found. Please install the latest version of Firefox and try again.')
         logging.debug(traceback.format_exc())
         sys.exit(1)
