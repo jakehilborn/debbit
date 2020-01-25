@@ -1,0 +1,39 @@
+       __     __    __    _ __ 
+  ____/ /__  / /_  / /_  (_) /_
+ / __  / _ \/ __ \/ __ \/ / __/
+/ /_/ /  __/ /_/ / /_/ / / /_  
+\__,_/\___/_.___/_.___/_/\__/  
+
+###############
+GETTING STARTED
+###############
+
+Install the latest version of Firefox, then edit the file config.txt to specify a few important things.
+
+1. Enable amazon_gift_card_reload and/or xfinity_bill_pay by changing 'enabled: False' to 'enabled: True'
+
+2. Set the total_purchases. If your bank requires 15 transactions per month, perhaps set amazon to 5 and xfinity to 10. If just using amazon, set 'total_purchases: 15'.
+
+3. Set amount_min, amount_max, usr, psw, and card. All other options can be left as is but feel free to change them.
+
+4. Run debbit by doule clicking on the start up file for your operating system.
+    Mac: debbit
+    Windows: debbit_keep_window_open.bat
+    Linux: debbit_keep_window_open.sh
+
+Debbit was built to be a set it and forget solution. It will run month to month automatically scheduling and executing purchases to meet your spending requirements. After seeing how it works, you'll want to set 'hide_web_browser: True' so Firefox stops popping up on your screen while you're using your computer.
+
+#################
+OTHER INFORMATION
+#################
+Q. How do I see how many purchases debbit has made?
+A. Open the folder 'state' and click the file for this month. It will show 'purchase_count' for each merchant.
+
+Q. Debbit's web automation failed, how do I get it fixed?
+A. In the failures folder there will be files with timestamps for names. Each timestamp will have 3 files ending in .txt, .png, and .html. Open the .png file and make sure it doesn't have your credit card number or password showing. Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there.
+
+Q. Can debbit automate purchases for other websites?
+A. Yes, please open an issue on GitHub and I'll work with you to get it automated.
+
+Q. What is debbit's homepage?
+A. https://github.com/jakehilborn/debbit
