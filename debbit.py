@@ -419,7 +419,7 @@ def record_failure(driver, function_name, error_msg, merchant):
     filename = absolute_path('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + function_name)
 
     with open(filename + '.txt', 'w', encoding='utf-8') as f:
-        f.write(error_msg)
+        f.write(version + ' ' + error_msg)
 
     try:
         driver.save_screenshot(filename + '.png')
@@ -504,6 +504,8 @@ class Merchant:
         self.card = str(config_entry['card'])
 
 
+version = 'v1.0-dev'
+
 if __name__ == '__main__':
     # configure loggers
     logging.getLogger().setLevel(logging.DEBUG)
@@ -523,7 +525,7 @@ if __name__ == '__main__':
     logging.info('  ____/ /__  / /_  / /_  (_) /_')
     logging.info(' / __  / _ \/ __ \/ __ \/ / __/')
     logging.info('/ /_/ /  __/ /_/ / /_/ / / /_  ')
-    logging.info('\__,_/\___/_.___/_.___/_/\__/  v1.0-dev')
+    logging.info('\__,_/\___/_.___/_.___/_/\__/  ' + version)
     logging.info('')
 
     # configure global constants
