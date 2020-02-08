@@ -12,7 +12,7 @@ from threading import Timer, Lock, Thread
 
 import yaml  # PyYAML
 from selenium import webdriver, common
-from selenium.common.exceptions import TimeoutException, SessionNotCreatedException
+from selenium.common.exceptions import TimeoutException, SessionNotCreatedException, ElementClickInterceptedException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
@@ -254,7 +254,13 @@ def amazon_gift_card_reload(driver, merchant, amount):
 
     driver.get('https://www.amazon.com/asv/reload/order')
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
-    driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
+
+    try:
+        driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
+    except ElementClickInterceptedException:  # spinner blocking button
+        time.sleep(3)
+        driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
+
     driver.find_element_by_id('ap_email').send_keys(merchant.usr)
 
     try:  # a/b tested new UI flow
