@@ -16,10 +16,10 @@ Install the latest version of Firefox, then edit the file config.txt to specify 
 
 3. Set amount_min, amount_max, usr, psw, and card. All other options can be left as is but feel free to change them.
 
-4. Run debbit by double clicking on the start up file for your operating system.
-    Mac: debbit
-    Windows: debbit_keep_window_open.bat
-    Linux: `python3 debbit.py`
+4. Run debbit, refer to your operating system:
+    Mac: Double click on `debbit`. If using Catalina, to run for the first time right click on `debbit`, click Open, and then click the Open button.
+    Windows: Double click on `debbit_keep_window_open.bat`
+    Linux: Execute `python3 debbit.py`
 
 Debbit was built to be a set it and forget solution. It will run month to month automatically scheduling and executing purchases to meet your spending requirements. After seeing how it works, you'll want to set 'hide_web_browser: True' so Firefox stops popping up on your screen while you're using your computer.
 
