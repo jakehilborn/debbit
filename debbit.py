@@ -278,6 +278,12 @@ def amazon_gift_card_reload(driver, merchant, amount):
     except TimeoutException:
         otp_flow = False
 
+    try:
+        driver.find_element_by_xpath("//*[contains(text(),'one-time pass')]").click()
+        otp_flow = True
+    except common.exceptions.NoSuchElementException:
+        pass
+
     if otp_flow:
         driver.find_element_by_id('continue').click()
 
