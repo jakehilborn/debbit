@@ -463,11 +463,10 @@ def get_webdriver():
     options = Options()
     options.headless = config['hide_web_browser']
     try:
-        return webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'))
+        return webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'), service_log_path=os.devnull)
     except SessionNotCreatedException:
         logging.error('')
         logging.error('Firefox not found. Please install the latest version of Firefox and try again.')
-        logging.debug(traceback.format_exc())
         web_driver_lock.release()
         sys.exit(1)
 
@@ -486,7 +485,6 @@ def close_webdriver(driver):
         raise
     except Exception:
         pass
-
 
 
 def absolute_path(*rel_paths):  # works cross platform when running source script or Pyinstaller binary
@@ -530,16 +528,14 @@ version = 'v1.0-dev'
 
 if __name__ == '__main__':
     # configure loggers
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
     log_format = '%(levelname)s: %(asctime)s %(message)s'
 
     stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(logging.INFO)
     stdout_handler.setFormatter(logging.Formatter(log_format))
     logging.getLogger().addHandler(stdout_handler)
 
-    file_handler = logging.FileHandler('debbit_log.log')
-    file_handler.setLevel(logging.DEBUG)
+    file_handler = logging.FileHandler(absolute_path('debbit_log.log'))
     file_handler.setFormatter(logging.Formatter(log_format))
     logging.getLogger().addHandler(file_handler)
 
