@@ -453,6 +453,7 @@ def scrub_sensitive_data(data, merchant):
 
 
 def get_webdriver():
+    web_driver_lock.acquire()
     options = Options()
     options.headless = config['hide_web_browser']
     try:
@@ -461,6 +462,7 @@ def get_webdriver():
         logging.error('')
         logging.error('Firefox not found. Please install the latest version of Firefox and try again.')
         logging.debug(traceback.format_exc())
+        web_driver_lock.release()
         sys.exit(1)
 
 
@@ -471,6 +473,14 @@ def close_webdriver(driver):
         raise
     except Exception:
         pass
+
+    try:
+        web_driver_lock.release()
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
+        pass
+
 
 
 def absolute_path(*rel_paths):  # works cross platform when running source script or Pyinstaller binary
@@ -543,6 +553,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     state_write_lock = Lock()
+    web_driver_lock = Lock()
     days_in_month = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
     main()
 
