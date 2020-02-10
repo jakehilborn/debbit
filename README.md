@@ -1,10 +1,7 @@
-```
-       __     __    __    _ __ 
-  ____/ /__  / /_  / /_  (_) /_
- / __  / _ \/ __ \/ __ \/ / __/
-/ /_/ /  __/ /_/ / /_/ / / /_  
-\__,_/\___/_.___/_.___/_/\__/  
-```
+<a href="https://i.imgur.com/6TQjwsI.mp4"><img align="right" src="debbit_preview.png"></a>
+
+# debbit
+**Click image for video demo 👉**
 
 ### Download
 
