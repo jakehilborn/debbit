@@ -14,9 +14,13 @@
 ### Debbit currently supports
 - Amazon gift card reloads
 - Xfinity bill pay
+- More to come... Please open a GitHub issue with requests for new merchants/bills to support.
 
 ### Features
 - **Anti account lockout**: Debbit will spread purchases through the month with some randomness in timing and amount spent. These controls prevent Debbit from spamming your accounts with too many transactions too quickly or too similarly.
 - **Fault tolerant**: Start up or shut down Debbit at any time. Debbit saves important state to your hard drive and will auto-adjust its spending to fit the time left in the month. It doesn't matter if you start Debbit on the 1st or the 15th of the month, it will adjust its scheduling accordingly.
 - **Built in support**: If amazon/xfinity/etc changes their website and Debbit stops working, it will generate error logs to describe the issue. All passwords & cc details are automatically removed from the logs. There is no built-in error uploads so you'll have to email the files or create an Issue on GitHub to share.
 - **Private**: There are no analytics or anything uploading data anywhere.
+
+### Feedback:
+Please create a GitHub Issue for any feedback, feature requests, merchant requests bugs, etc. Happy to accept pull requests too!
