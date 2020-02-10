@@ -1,7 +1,7 @@
 <a href="https://i.imgur.com/6TQjwsI.mp4"><img align="right" src="debbit_preview.png"></a>
 
 # debbit
-**Click image for video demo 👉**
+**Click image for video demo [👉](https://i.imgur.com/6TQjwsI.mp4)**
 
 ### Download
 
