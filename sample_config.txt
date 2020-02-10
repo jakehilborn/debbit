@@ -34,10 +34,10 @@ amazon_gift_card_reload:
     # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
     burst:
         # number of purchases to make in a row
-        count: 3
+        count: 1
 
         # minimum gap in seconds between each burst. Each burst will be spaced out by at least this much.
-        min_gap: 17280
+        min_gap: 79200
 
         # random extra time up to this number added to burst min_gap between gaps to allow for some randomness in the timing
         time_variance: 14400
@@ -78,10 +78,10 @@ xfinity_bill_pay:
     # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
     burst:
         # number of purchases to make in a row
-        count: 3
+        count: 1
 
         # minimum gap in seconds between each burst. Each burst will be spaced out by at least this much.
-        min_gap: 17280
+        min_gap: 79200
 
         # random extra time up to this number added to burst min_gap between gaps to allow for some randomness in the timing
         time_variance: 14400
