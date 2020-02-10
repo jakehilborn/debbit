@@ -524,7 +524,7 @@ class Merchant:
         self.card = str(config_entry['card'])
 
 
-version = 'v1.0'
+version = 'v1.0.1-dev'
 
 if __name__ == '__main__':
     # configure loggers
