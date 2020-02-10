@@ -562,5 +562,8 @@ if __name__ == '__main__':
 '''
 TODO
 
+Support multiple cards per merchant
+Refactor into per-merchant modules
+Unit test suite
 Check for internet connection post wake-up before bursting
 '''
