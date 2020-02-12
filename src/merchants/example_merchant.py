@@ -21,7 +21,6 @@ Result.error enum since it is expected that your web automation will throw an ex
 an error.
 
 For more complex scenarios, please refer to the other merchant .py files.
-
 '''
 
 
