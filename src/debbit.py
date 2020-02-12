@@ -18,22 +18,21 @@ from result import Result
 
 
 def main():
-
     if CONFIG['mode'] != 'burst' and CONFIG['mode'] != 'spread':
-        logging.error('Set config.txt "mode" to burst or spread')
+        LOGGER.error('Set config.txt "mode" to burst or spread')
         return
 
     now = datetime.now()
     state = load_state(now.year, now.month)
 
     if not state:
-        logging.info('No purchases yet complete for ' + now.strftime('%B %Y'))
+        LOGGER.info('No purchases yet complete for ' + now.strftime('%B %Y'))
 
     for merchant_name in state:
         cur_purchases = state[merchant_name]['purchase_count']
-        logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
+        LOGGER.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
 
-    logging.info('')
+    LOGGER.info('')
     for name, merchant_module in scan_merchant_modules().items():
         load_merchant(name, merchant_module.web_automation)
 
@@ -71,7 +70,7 @@ def load_merchant(name, web_automation):
         if CONFIG['mode'] == 'burst':
             Thread(target=burst_loop, args=(merchant,)).start()
     else:
-        logging.info(name + ' disabled, set enabled: True in config.txt to enable.')
+        LOGGER.info(name + ' disabled, set enabled: True in config.txt to enable.')
 
 
 def burst_loop(merchant):
@@ -107,14 +106,14 @@ def burst_loop(merchant):
                 and cur_purchases < merchant.total_purchases \
                 and now > skip_time:
 
-            logging.info('Now bursting ' + str(this_burst_count) + ' ' + merchant.name + ' ' + plural('purchase', this_burst_count))
+            LOGGER.info('Now bursting ' + str(this_burst_count) + ' ' + merchant.name + ' ' + plural('purchase', this_burst_count))
 
             result = web_automation_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
             for _ in range(this_burst_count - 1):
                 if result != Result.success:
                     break
                 sleep_time = 30
-                logging.info('Waiting ' + str(sleep_time) + ' seconds before next ' + merchant.name + ' purchase')
+                LOGGER.info('Waiting ' + str(sleep_time) + ' seconds before next ' + merchant.name + ' purchase')
                 time.sleep(sleep_time)
                 result = web_automation_wrapper(merchant)
 
@@ -157,7 +156,7 @@ def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cu
     if next_burst_time < skip_time:
         next_burst_time = skip_time
 
-    logging.info('Bursting next ' + str(next_burst_count) + ' ' + merchant.name + ' ' + plural('purchase', next_burst_count) + ' after ' + next_burst_time.strftime("%Y-%m-%d %I:%M%p"))
+    LOGGER.info('Bursting next ' + str(next_burst_count) + ' ' + merchant.name + ' ' + plural('purchase', next_burst_count) + ' after ' + next_burst_time.strftime("%Y-%m-%d %I:%M%p"))
 
 
 def start_schedule(merchant):
@@ -169,7 +168,7 @@ def start_schedule(merchant):
             spread_recursion(merchant)
         else:
             start_offset = (datetime(now.year, now.month, merchant.min_day) - now).total_seconds()
-            logging.info('Scheduling ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
+            LOGGER.info('Scheduling ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
             Timer(start_offset, spread_recursion, [merchant]).start()
     elif state[merchant.name]['purchase_count'] < merchant.total_purchases and now.timestamp() - state[merchant.name]['transactions'][-1]['unix_time'] > merchant.spread_min_gap:
         spread_recursion(merchant)
@@ -205,14 +204,14 @@ def schedule_next(merchant):
         range_min = (datetime(year, month, merchant.min_day) - now).total_seconds()
 
         if range_min <= 0:
-            logging.error('Fatal error, could not determine date of next month when scheduling ' + merchant.name)
+            LOGGER.error('Fatal error, could not determine date of next month when scheduling ' + merchant.name)
             return
 
         range_max = range_min + merchant.spread_time_variance
 
     start_offset = random.randint(int(range_min), int(range_max))
-    logging.info('Scheduling next ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
-    logging.info('')
+    LOGGER.info('Scheduling next ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
+    LOGGER.info('')
     Timer(start_offset, spread_recursion, [merchant]).start()
 
 
@@ -223,7 +222,7 @@ def spread_recursion(merchant):
 
 def record_transaction(merchant_name, amount):
     now = datetime.now()
-    logging.info('Recording successful ' + merchant_name + ' purchase')
+    LOGGER.info('Recording successful ' + merchant_name + ' purchase')
 
     if not os.path.exists(absolute_path('state')):
         os.mkdir(absolute_path('state'))
@@ -254,7 +253,7 @@ def record_transaction(merchant_name, amount):
 
     STATE_WRITE_LOCK.release()
 
-    logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
+    LOGGER.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
 
 
 def formatted_date_of_offset(now, start_offset):
@@ -267,24 +266,25 @@ def web_automation_wrapper(merchant):
     while failures < threshold:
         driver = get_webdriver()
         amount = random.randint(merchant.amount_min, merchant.amount_max)
+        LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
         try:
             result = merchant.web_automation(driver, merchant, amount)
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception as e:
-            logging.error(merchant.name + ' error: ' + traceback.format_exc())
+            LOGGER.error(merchant.name + ' error: ' + traceback.format_exc())
             failures += 1
 
             record_failure(driver, merchant.name, traceback.format_exc(), merchant)
             close_webdriver(driver)
 
             if failures < threshold:
-                logging.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.name + ' attempts done, trying again in ' + str(60 * failures ** 4) + ' seconds')
+                LOGGER.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.name + ' attempts done, trying again in ' + str(60 * failures ** 4) + ' seconds')
                 time.sleep(60 * failures ** 4)  # try again in 1min, 16min, 1.3hr, 4.3hr, 10.4hr
                 continue
             else:
                 error_msg = merchant.name + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run this program to try again.'
-                logging.error(error_msg)
+                LOGGER.error(error_msg)
                 raise Exception(error_msg) from e
 
         close_webdriver(driver)
@@ -292,7 +292,7 @@ def web_automation_wrapper(merchant):
         if result == Result.success:
             record_transaction(merchant.name, amount)
         elif result == Result.unverified:
-            logging.error('Unable to verify ' + merchant.name + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run this program to try again.')
+            LOGGER.error('Unable to verify ' + merchant.name + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run this program to try again.')
             sys.exit(1)  # exits this merchant's thread, not entire program
 
         return result
@@ -305,7 +305,7 @@ def record_failure(driver, web_automation_name, error_msg, merchant):
     filename = absolute_path('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + web_automation_name)
 
     with open(filename + '.txt', 'w', encoding='utf-8') as f:
-        f.write('FIXME' + ' ' + error_msg)
+        f.write(VERSION + ' ' + error_msg)
 
     try:
         driver.save_screenshot(filename + '.png')
@@ -318,7 +318,7 @@ def record_failure(driver, web_automation_name, error_msg, merchant):
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as e:
-        logging.error('record_failure error: ' + traceback.format_exc())
+        LOGGER.error('record_failure error: ' + traceback.format_exc())
 
 
 def scrub_sensitive_data(data, merchant):
@@ -339,8 +339,8 @@ def get_webdriver():
     try:
         return webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'), service_log_path=os.devnull)
     except SessionNotCreatedException:
-        logging.error('')
-        logging.error('Firefox not found. Please install the latest version of Firefox and try again.')
+        LOGGER.error('')
+        LOGGER.error('Firefox not found. Please install the latest version of Firefox and try again.')
         WEB_DRIVER_LOCK.release()
         sys.exit(1)
 
@@ -405,16 +405,24 @@ if __name__ == '__main__':
     file_handler.setFormatter(logging.Formatter(log_format))
     LOGGER.addHandler(file_handler)
 
-    # set up global constants
+    # configure global constants
     STATE_WRITE_LOCK = Lock()
     WEB_DRIVER_LOCK = Lock()
     DAYS_IN_MONTH = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+    VERSION = 'v1.0.1-dev'
+
+    LOGGER.info('       __     __    __    _ __ ')
+    LOGGER.info('  ____/ /__  / /_  / /_  (_) /_')
+    LOGGER.info(' / __  / _ \/ __ \/ __ \/ / __/')
+    LOGGER.info('/ /_/ /  __/ /_/ / /_/ / / /_  ')
+    LOGGER.info('\__,_/\___/_.___/_.___/_/\__/  ' + VERSION)
+    LOGGER.info('')
 
     try:
         with open(absolute_path('config.txt'), 'r', encoding='utf-8') as config_f:
             CONFIG = yaml.safe_load(config_f.read())
     except FileNotFoundError:
-        logging.error('config.txt not found. Please copy and rename sample_config.txt to config.txt. Then, put your credentials and debit card info in config.txt.')
+        LOGGER.error('config.txt not found. Please copy and rename sample_config.txt to config.txt. Then, put your credentials and debit card info in config.txt.')
         sys.exit(1)
 
     main()

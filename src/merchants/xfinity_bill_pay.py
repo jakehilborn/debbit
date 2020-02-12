@@ -13,8 +13,6 @@ LOGGER = logging.getLogger('debbit')
 
 
 def web_automation(driver, merchant, amount):
-    LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
-
     driver.get('https://customer.xfinity.com/#/billing/payment')
 
     WebDriverWait(driver, 90).until(expected_conditions.element_to_be_clickable((By.ID, 'user')))
