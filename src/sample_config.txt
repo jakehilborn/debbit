@@ -93,3 +93,47 @@ xfinity_bill_pay:
 
         # extra time before & after each scheduled purchase to allow for some randomness in the timing
         time_variance: 14400
+
+example_merchant:
+
+    # change this to True after configuring the options below
+    enabled: True
+
+    # total purchases to make each month
+    total_purchases: 60
+
+    # random number chosen between these two values to spend. These numbers are cents.
+    amount_min: 20
+    amount_max: 200
+
+    # do not put quotes around usr or psw
+    usr: username
+    psw: p@ssw0rd
+
+    # just numbers. No quotes, no dashes. Optionally just put last 4 digits of card number since xfinity does not need the whole number.
+    card: 1111222233334444
+
+    # day of the month to start making purchases. Recommended to leave at 2 to avoid potential off by one errors in all systems.
+    min_day: 2
+
+    # day of the month to stop making purchases. Useful if your cable bill auto-pays on the 22nd of the month, for example. Leave blank to default to the end of the month minus one day.
+    max_day:
+
+    # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
+    burst:
+        # number of purchases to make in a row
+        count: 3
+
+        # minimum gap in seconds between each burst. Each burst will be spaced out by at least this much.
+        min_gap: 79200
+
+        # random extra time up to this number added to burst min_gap between gaps to allow for some randomness in the timing
+        time_variance: 14400
+
+    # Spaces out purchases evenly with some randomness through the month. Use this mode if running on a server or computer that never sleeps.
+    spread:
+        # minimum gap in seconds between each purchase. This usually only applies if you start this program late in the month.
+        min_gap: 43200
+
+        # extra time before & after each scheduled purchase to allow for some randomness in the timing
+        time_variance: 14400

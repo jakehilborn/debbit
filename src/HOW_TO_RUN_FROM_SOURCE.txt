@@ -1,0 +1,28 @@
+If you want to use debbit on mac/Windows please download a release from https://github.com/jakehilborn/debbit/releases
+If you want to develop debbit or use on Linux follow instructions below.
+
+1. Install the latest version of Firefox
+2. Download the latest geckodriver for your OS from here https://github.com/mozilla/geckodriver/releases
+    Extract the zip/tar.gz and place `geckodriver` (or `geckodriver.exe`) in the same directory as debbit.py
+    If using windows, you will need to rename `geckodriver.exe` to `geckodriver`
+3. Copy and rename the file `sample_config.txt` to `config.txt` in the same directory
+4. Configure your python3 environment and dependencies
+
+    These instructions will vary somewhat depending on your platform. For example,
+    if your system already has Python3 then you'll use `pip` instead of `pip3`. If
+    you don't have pip installed, search on Google for how to install pip.
+
+    # install pipenv
+    pip3 install --user pipenv
+    pip3 install --user --upgrade pipenv
+
+    cd debbit/src
+
+    # install dependencies listed in Pipfile
+    pipenv install
+
+    # activate pipshell
+    pipenv shell
+
+    # run debbit
+    python debbit.py
