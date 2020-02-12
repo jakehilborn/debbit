@@ -16,20 +16,8 @@ from selenium.webdriver.firefox.options import Options
 
 from result import Result
 
-STATE_WRITE_LOCK = Lock()
-WEB_DRIVER_LOCK = Lock()
-DAYS_IN_MONTH = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
-CONFIG = None
-
 
 def main():
-    try:
-        with open(absolute_path('config.txt'), 'r', encoding='utf-8') as config_f:
-            global CONFIG
-            CONFIG = yaml.safe_load(config_f.read())
-    except FileNotFoundError:
-        logging.error('config.txt not found. Please copy and rename sample_config.txt to config.txt. Then, put your credentials and debit card info in config.txt.')
-        sys.exit(1)
 
     if CONFIG['mode'] != 'burst' and CONFIG['mode'] != 'spread':
         logging.error('Set config.txt "mode" to burst or spread')
@@ -413,9 +401,21 @@ if __name__ == '__main__':
     stdout_handler.setFormatter(logging.Formatter(log_format))
     LOGGER.addHandler(stdout_handler)
 
-    file_handler = logging.FileHandler('debbit_log.log')
+    file_handler = logging.FileHandler(absolute_path('debbit_log.log'))
     file_handler.setFormatter(logging.Formatter(log_format))
     LOGGER.addHandler(file_handler)
+
+    # set up global constants
+    STATE_WRITE_LOCK = Lock()
+    WEB_DRIVER_LOCK = Lock()
+    DAYS_IN_MONTH = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+
+    try:
+        with open(absolute_path('config.txt'), 'r', encoding='utf-8') as config_f:
+            CONFIG = yaml.safe_load(config_f.read())
+    except FileNotFoundError:
+        logging.error('config.txt not found. Please copy and rename sample_config.txt to config.txt. Then, put your credentials and debit card info in config.txt.')
+        sys.exit(1)
 
     main()
 
