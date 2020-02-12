@@ -1,0 +1,18 @@
+These instructions will vary somewhat depending on your platform. For example,
+if your system already has Python3 then you'll use `pip` instead of `pip3`. If
+you don't have pip installed, search on Google for how to install pip.
+
+# install pipenv
+pip3 install --user pipenv
+pip3 install --user --upgrade pipenv
+
+cd debbit/src
+
+# install dependencies listed in Pipfile
+pipenv install
+
+# activate pipshell
+pipenv shell
+
+# run debbit
+./debbit.py
