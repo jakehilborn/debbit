@@ -8,8 +8,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
-from debbit.utils import cents_to_str
-from debbit.result import Result
+from utils import cents_to_str
+from result import Result
 
 LOGGER = logging.getLogger('debbit')
 

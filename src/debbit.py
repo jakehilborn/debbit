@@ -14,7 +14,7 @@ from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException
 from selenium.webdriver.firefox.options import Options
 
-from debbit.result import Result
+from result import Result
 
 STATE_WRITE_LOCK = Lock()
 WEB_DRIVER_LOCK = Lock()
@@ -46,8 +46,8 @@ def main():
         logging.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
 
     logging.info('')
-    for name, web_automation in scan_merchant_modules().items():
-        load_merchant(name, web_automation)
+    for name, merchant_module in scan_merchant_modules().items():
+        load_merchant(name, merchant_module.web_automation)
 
 
 def load_state(year, month):
@@ -62,11 +62,11 @@ def load_state(year, month):
 
 
 def scan_merchant_modules():
-    merchant_files = os.listdir(absolute_path('debbit/merchants'))
+    merchant_files = os.listdir(absolute_path('merchants'))
     merchant_modules = {}
     for merchant_file in merchant_files:
         if merchant_file.endswith('.py') and merchant_file != '__init__.py':
-            merchant_modules[merchant_file[:-3]] = __import__('debbit.merchants.' + merchant_file[:-3] , fromlist=["*"])
+            merchant_modules[merchant_file[:-3]] = __import__('merchants.' + merchant_file[:-3] , fromlist=["*"])
 
     return merchant_modules
 
@@ -317,7 +317,7 @@ def record_failure(driver, web_automation_name, error_msg, merchant):
     filename = absolute_path('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + web_automation_name)
 
     with open(filename + '.txt', 'w', encoding='utf-8') as f:
-        f.write(version + ' ' + error_msg)
+        f.write('FIXME' + ' ' + error_msg)
 
     try:
         driver.save_screenshot(filename + '.png')
@@ -403,6 +403,21 @@ class Merchant:
         self.psw = str(config_entry['psw'])
         self.card = str(config_entry['card'])
 
+
+if __name__ == '__main__':
+    LOGGER = logging.getLogger('debbit')
+    LOGGER.setLevel(logging.INFO)
+    log_format = '%(levelname)s: %(asctime)s %(message)s'
+
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(logging.Formatter(log_format))
+    LOGGER.addHandler(stdout_handler)
+
+    file_handler = logging.FileHandler('debbit_log.log')
+    file_handler.setFormatter(logging.Formatter(log_format))
+    LOGGER.addHandler(file_handler)
+
+    main()
 
 '''
 TODO

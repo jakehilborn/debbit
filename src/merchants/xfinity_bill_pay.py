@@ -6,13 +6,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
-from debbit.utils import cents_to_str
-from debbit.result import Result
+from utils import cents_to_str
+from result import Result
 
 LOGGER = logging.getLogger('debbit')
 
 
-def xfinity_bill_pay(driver, merchant, amount):
+def web_automation(driver, merchant, amount):
     LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
 
     driver.get('https://customer.xfinity.com/#/billing/payment')
