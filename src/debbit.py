@@ -275,7 +275,7 @@ def web_automation_wrapper(merchant):
             LOGGER.error(merchant.name + ' error: ' + traceback.format_exc())
             failures += 1
 
-            record_failure(driver, merchant.name, traceback.format_exc(), merchant)
+            record_failure(driver, merchant, traceback.format_exc())
             close_webdriver(driver)
 
             if failures < threshold:
@@ -298,11 +298,11 @@ def web_automation_wrapper(merchant):
         return result
 
 
-def record_failure(driver, web_automation_name, error_msg, merchant):
+def record_failure(driver, merchant, error_msg):
     if not os.path.exists(absolute_path('failures')):
         os.mkdir(absolute_path('failures'))
 
-    filename = absolute_path('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + web_automation_name)
+    filename = absolute_path('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + merchant.name)
 
     with open(filename + '.txt', 'w', encoding='utf-8') as f:
         f.write(VERSION + ' ' + error_msg)
