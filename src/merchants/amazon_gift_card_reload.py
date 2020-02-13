@@ -53,8 +53,8 @@ def web_automation(driver, merchant, amount):
 
         WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input")))
         sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
-        logging.info(sent_to_text)
-        logging.info('Enter OTP here:')
+        LOGGER.info(sent_to_text)
+        LOGGER.info('Enter OTP here:')
         otp = input()
 
         elem = driver.find_element_by_xpath("//input")
