@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from utils import cents_to_str
+from utils import str_to_cents
 from result import Result
 
 LOGGER = logging.getLogger('debbit')
@@ -43,11 +44,11 @@ Detected first time run captcha. Please follow these one-time steps. Future runs
         pass
 
     cur_balance = driver.find_element_by_xpath("//span[contains(text(), '$')]").text
-    if int(''.join([c for c in cur_balance if c.isdigit()])) == 0:  # $77.84 -> 7784
+    if str_to_cents(cur_balance) == 0:
         LOGGER.error('xfinity balance is zero, will try again later.')
         return Result.skipped
-    elif int(''.join([c for c in cur_balance if c.isdigit()])) < amount:
-        amount = int(cur_balance[1:-3] + cur_balance[-2:])
+    elif str_to_cents(cur_balance) < amount:
+        amount = str_to_cents(cur_balance)
 
     driver.find_element_by_id('customAmount').send_keys(cents_to_str(amount))
     driver.find_element_by_xpath("//span[contains(text(),'nding in " + merchant.card[-4:] + "')]").click()
