@@ -266,16 +266,21 @@ def web_automation_wrapper(merchant):
     while failures < threshold:
         driver = get_webdriver()
         amount = random.randint(merchant.amount_min, merchant.amount_max)
+        error_msg = 'Refer to prior log messages for error details'
         LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
         try:
             result = merchant.web_automation(driver, merchant, amount)
         except (KeyboardInterrupt, SystemExit):
             raise
-        except Exception as e:
-            LOGGER.error(merchant.name + ' error: ' + traceback.format_exc())
+        except Exception:
+            result = Result.failed
+            error_msg = traceback.format_exc()
+
+        if result == Result.failed:
+            LOGGER.error(merchant.name + ' error: ' + error_msg)
             failures += 1
 
-            record_failure(driver, merchant, traceback.format_exc())
+            record_failure(driver, merchant, error_msg)
             close_webdriver(driver)
 
             if failures < threshold:
@@ -283,16 +288,17 @@ def web_automation_wrapper(merchant):
                 time.sleep(60 * failures ** 4)  # try again in 1min, 16min, 1.3hr, 4.3hr, 10.4hr
                 continue
             else:
-                error_msg = merchant.name + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run this program to try again.'
-                LOGGER.error(error_msg)
-                raise Exception(error_msg) from e
+                exit_msg = merchant.name + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run debbit to try again.'
+                LOGGER.error(exit_msg)
+                raise Exception(exit_msg)
 
         close_webdriver(driver)
 
         if result == Result.success:
             record_transaction(merchant.name, amount)
-        elif result == Result.unverified:
-            LOGGER.error('Unable to verify ' + merchant.name + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run this program to try again.')
+
+        if result == Result.unverified:
+            LOGGER.error('Unable to verify ' + merchant.name + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run debbit to try again.')
             sys.exit(1)  # exits this merchant's thread, not entire program
 
         return result
@@ -431,8 +437,9 @@ if __name__ == '__main__':
 TODO
 
 Support multiple cards per merchant
-Refactor into per-merchant modules
 Unit test suite
 Amazon captcha support
 Check for internet connection post wake-up before bursting
+Propagate error details to failures/ files when returning Result.failure
+Result.unverified should record details to failures/ directory
 '''
