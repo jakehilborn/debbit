@@ -12,7 +12,7 @@ from utils import str_to_cents
 
 LOGGER = logging.getLogger('debbit')
 
-# Written by reddit user http://reddit.com/u/TNSepta, PM for any bugs or issues.
+# Written by reddit user reddit.com/u/TNSepta, PM for any bugs or issues.
 
 
 def web_automation(driver, merchant, amount):
