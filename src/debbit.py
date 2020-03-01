@@ -724,6 +724,7 @@ class Merchant:
         self.spread_min_gap = merchant_config.get('advanced', {}).get('spread', {}).get('min_gap', 14400)  # 4 hours
         self.spread_time_variance = merchant_config.get('advanced', {}).get('spread', {}).get('time_variance', 14400)  # 4 hours
         self.dry_run = merchant_config.get('dry_run', False)
+        self.merchant_specific_config = merchant_config['merchant_specific_config']
 
 
 class Config:

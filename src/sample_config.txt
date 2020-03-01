@@ -16,4 +16,7 @@ example_card_description:
     psw: pass
     card: 2222
     burst_count: 2
+    merchant_specific_config:
+        # Set to true to automatically archive the latest gift card reload, currently only supported on Amazon
+        archive: True
     dry_run: False
