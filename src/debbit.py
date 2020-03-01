@@ -428,8 +428,9 @@ if __name__ == '__main__':
     to_open = ''
 
     for file in files:
-        if (os.path.exists(file)):
-            to_open = file
+        candidate_absolute_path = absolute_path(file)
+        if (os.path.exists(candidate_absolute_path)):
+            to_open = candidate_absolute_path
             break
 
     if to_open == '':
@@ -439,7 +440,7 @@ if __name__ == '__main__':
     
         sys.exit(1)
 
-    with open(absolute_path(to_open), 'r', encoding='utf-8') as config_f:
+    with open(to_open, 'r', encoding='utf-8') as config_f:
         CONFIG = yaml.safe_load(config_f.read())
 
     main()
