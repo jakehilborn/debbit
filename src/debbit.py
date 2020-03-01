@@ -424,12 +424,24 @@ if __name__ == '__main__':
     LOGGER.info('\__,_/\___/_.___/_.___/_/\__/  ' + VERSION)
     LOGGER.info('')
 
-    try:
-        with open(absolute_path('config.txt'), 'r', encoding='utf-8') as config_f:
-            CONFIG = yaml.safe_load(config_f.read())
-    except FileNotFoundError:
-        LOGGER.error('config.txt not found. Please copy and rename sample_config.txt to config.txt. Then, put your credentials and debit card info in config.txt.')
+    files = ['config.yml', 'config.txt']
+    to_open = ''
+
+    for file in files:
+        candidate_absolute_path = absolute_path(file)
+        if (os.path.exists(candidate_absolute_path)):
+            to_open = candidate_absolute_path
+            break
+
+    if to_open == '':
+        LOGGER.error('Config file not found.')
+        LOGGER.error('Copy and rename sample_config.txt to config.yml or config.txt.')
+        LOGGER.error('Then, put your credentials and debit card info in the file.')
+    
         sys.exit(1)
+
+    with open(to_open, 'r', encoding='utf-8') as config_f:
+        CONFIG = yaml.safe_load(config_f.read())
 
     main()
 

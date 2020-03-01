@@ -1,4 +1,5 @@
 config.txt
+config.yml
 debbit_log.log
 state/
 failures/
