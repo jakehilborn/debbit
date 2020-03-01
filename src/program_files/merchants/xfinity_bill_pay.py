@@ -69,6 +69,10 @@ Detected first time run captcha. Please follow these one-time steps. Future runs
 
     WebDriverWait(driver, 5).until(expected_conditions.presence_of_element_located((By.XPATH, "//button[contains(text(),'Submit Payment')]")))
     time.sleep(random.random() * 3)
+
+    if merchant.dry_run == True:
+        return Result.dry_run
+
     driver.find_element_by_xpath("//button[contains(text(),'Submit Payment')]").click()
 
     try:

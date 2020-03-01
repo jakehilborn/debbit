@@ -54,6 +54,9 @@ def web_automation(driver, merchant, amount):
     button_str = driver.find_element_by_id('otpSubmit').get_attribute('value')
     expect_str = "Pay $" + utils.cents_to_str(amount) + " now with " + merchant.card
 
+    if merchant.dry_run == True:
+        return Result.dry_run
+
     if button_str == expect_str:
         driver.find_element_by_id('otpSubmit').click()
         LOGGER.info('Submitting purchase: ' + button_str)

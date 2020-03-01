@@ -212,6 +212,9 @@ def web_automation(driver, merchant, amount):
     if not is_order_total_correct(driver, amount):
         return Result.unverified
 
+    if merchant.dry_run == True:
+      return Result.dry_run
+
     if driver.find_elements_by_id('submitOrderButtonId'):
         time.sleep(1 + random.random() * 2)
         driver.find_element_by_id('submitOrderButtonId').click()  # Click "Place your order" button

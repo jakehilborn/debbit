@@ -16,3 +16,4 @@ example_card_description:
     psw: pass
     card: 2222
     burst_count: 2
+    dry_run: False
