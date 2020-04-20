@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from selenium import common
 from selenium.common.exceptions import TimeoutException
@@ -15,6 +16,8 @@ LOGGER = logging.getLogger('debbit')
 
 def web_automation(driver, merchant, amount):
     driver.get('https://customer.xfinity.com/#/billing/payment')
+
+    return Result.success
 
     WebDriverWait(driver, 90).until(expected_conditions.element_to_be_clickable((By.ID, 'user')))
 
