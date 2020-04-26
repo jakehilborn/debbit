@@ -31,8 +31,8 @@ def str_to_cents(str):
 # Returns False if element found indicating that we need to log in.
 # Returns True if element found indicating that we are already logged in.
 #
-# To experiment with what to pass in here, try executing a statement like this while your
-# debugger is paused in your merchants web_automation() function.
+# To experiment with what to pass in here, try executing statements like these
+# while your debugger is paused in your merchant's web_automation() function:
 
 # driver.find_element(By.ID, 'some-element-id')
 # driver.find_element(By.XPATH, "//*[contains(text(),'some text on webpage')]")
