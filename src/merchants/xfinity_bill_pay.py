@@ -6,8 +6,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from result import Result
-from utils import cents_to_str
-from utils import str_to_cents
+import utils
 
 LOGGER = logging.getLogger('debbit')
 
@@ -15,18 +14,12 @@ LOGGER = logging.getLogger('debbit')
 def web_automation(driver, merchant, amount):
     driver.get('http://payments.xfinity.com/')
 
-    # This lambda function returns the moment either of elements are visible.
-    # Returns 'logging_in' or 'logged_in' depending on the element found.
-    auth_flow = WebDriverWait(driver, 90).until(
-        lambda driver:
-        (driver.find_elements(By.ID, 'user') and 'logging_in')
-        or
-        (driver.find_elements(By.ID, 'customAmount') and 'logged_in')
+    logged_in = utils.is_logged_in(driver, timeout=90,
+        logged_out_element=(By.ID, 'user'),
+        logged_in_element=(By.ID, 'customAmount')
     )
 
-    LOGGER.info('auth_flow=' + auth_flow)
-
-    if auth_flow == 'logging_in':
+    if not logged_in:
         driver.find_element_by_id('user').send_keys(merchant.usr)
         driver.find_element_by_id('passwd').send_keys(merchant.psw)
         driver.find_element_by_id('sign_in').click()
@@ -51,13 +44,13 @@ def web_automation(driver, merchant, amount):
         driver.find_element_by_id('no').click()
 
     cur_balance = driver.find_element_by_xpath("//span[contains(text(), '$')]").text
-    if str_to_cents(cur_balance) == 0:
+    if utils.str_to_cents(cur_balance) == 0:
         LOGGER.error('xfinity balance is zero, will try again later.')
         return Result.skipped
-    elif str_to_cents(cur_balance) < amount:
-        amount = str_to_cents(cur_balance)
+    elif utils.str_to_cents(cur_balance) < amount:
+        amount = utils.str_to_cents(cur_balance)
 
-    driver.find_element_by_id('customAmount').send_keys(cents_to_str(amount))
+    driver.find_element_by_id('customAmount').send_keys(utils.cents_to_str(amount))
     driver.find_element_by_xpath("//span[contains(text(),'nding in " + merchant.card[-4:] + "')]").click()
     driver.find_element_by_xpath("//span[contains(text(),'nding in " + merchant.card[-4:] + "')]").click()
     driver.find_element_by_xpath("//button[contains(text(),'Continue')]").click()
