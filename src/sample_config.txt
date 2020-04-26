@@ -3,7 +3,7 @@
 # set to 'burst' if running on a computer that is not always on (e.g. a laptop). Set to 'spread' if running on a server or computer that never sleeps.
 mode: burst
 
-# set to True to run web automation invisibly in the background
+# set to True to run web automation invisibly in the background, aka headless mode.
 hide_web_browser: False
 
 amazon_gift_card_reload:
@@ -30,6 +30,11 @@ amazon_gift_card_reload:
 
     # day of the month to stop making purchases. Leave blank to default to the end of the month minus one day.
     max_day:
+
+    # Closes browser in between purchases and clears data/cookies.
+    # False will reduce likelihood of captcha challenges and repeating multi-factor auth.
+    # True can help avoid unexpected web page changes. Recommended to set to True if seeing purchase failures.
+    close_browser: False
 
     # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
     burst:
@@ -75,6 +80,11 @@ xfinity_bill_pay:
     # day of the month to stop making purchases. Useful if your cable bill auto-pays on the 22nd of the month, for example. Leave blank to default to the end of the month minus one day.
     max_day: 21
 
+    # Closes browser in between purchases and clears data/cookies.
+    # False will reduce likelihood of captcha challenges and repeating multi-factor auth.
+    # True can help avoid unexpected web page changes. Recommended to set to True if seeing purchase failures.
+    close_browser: False
+
     # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
     burst:
         # number of purchases to make in a row
@@ -119,6 +129,11 @@ optimum_bill_pay:
     # day of the month to stop making purchases. Useful if your bill auto-pays on the 22nd of the month, for example. Leave blank to default to the end of the month minus one day.
     max_day:
 
+    # Closes browser in between purchases and clears data/cookies.
+    # False will reduce likelihood of captcha challenges and repeating multi-factor auth.
+    # True can help avoid unexpected web page changes. Recommended to set to True if seeing purchase failures.
+    close_browser: False
+
     # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
     burst:
         # number of purchases to make in a row
@@ -162,6 +177,11 @@ example_merchant:
 
     # day of the month to stop making purchases. Useful if your cable bill auto-pays on the 22nd of the month, for example. Leave blank to default to the end of the month minus one day.
     max_day:
+
+    # Closes browser in between purchases and clears data/cookies.
+    # False will reduce likelihood of captcha challenges and repeating multi-factor auth.
+    # True can help avoid unexpected web page changes. Recommended to set to True if seeing purchase failures.
+    close_browser: False
 
     # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
     burst:
