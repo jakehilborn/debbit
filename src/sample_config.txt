@@ -133,7 +133,7 @@ att_bill_pay:
     # Closes browser in between purchases and clears data/cookies.
     # False will reduce likelihood of captcha challenges and repeating multi-factor auth.
     # True can help avoid unexpected web page changes. Recommended to set to True if seeing purchase failures.
-    close_browser: True
+    close_browser: False
 
     # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
     burst:
