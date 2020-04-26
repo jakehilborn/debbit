@@ -1,0 +1,27 @@
+# Confused? Open up INSTRUCTIONS.txt and check out these sections:
+# Config.txt Explanation - what each config option does
+# Config.txt Example - shows structure of config.txt for multiple merchants and/or multiple cards"
+# Config.txt Merchant Info - important config restrictions some merchants have
+
+mode: burst
+hide_web_browser: False
+
+card_1:
+- amazon_gift_card_reload:
+    total_purchases: 12
+    amount_min: 50
+    amount_max: 59
+    usr: user
+    psw: pass
+    card:
+    close_browser: False
+    burst_count: 1
+- xfinity_bill_pay:
+    total_purchases: 12
+    amount_min: 50
+    amount_max: 59
+    usr: user
+    psw: pass
+    close_browser: False
+    burst_count: 1
+    card:
