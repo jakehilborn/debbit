@@ -104,6 +104,57 @@ xfinity_bill_pay:
         # extra time before & after each scheduled purchase to allow for some randomness in the timing
         time_variance: 14400
 
+att_bill_pay:
+
+    # change this to True after configuring the options below
+    enabled: True
+
+    # total purchases to make each month
+    total_purchases: 12
+
+    # random number chosen between these two values to spend. These numbers are cents.
+    # AT&T allows a minimum payment of $1.
+    amount_min: 100
+    amount_max: 125
+
+    # do not put quotes around usr or psw
+    usr: 1234567890
+    psw: p@ssw0rd
+
+    # card name as saved in AT&T account
+    card: Blue Debit Card
+
+    # day of the month to start making purchases. Recommended to leave at 2 to avoid potential off by one errors in all systems.
+    min_day: 2
+
+    # day of the month to stop making purchases. Leave blank to default to the end of the month minus one day.
+    max_day:
+
+    # Closes browser in between purchases and clears data/cookies.
+    # False will reduce likelihood of captcha challenges and repeating multi-factor auth.
+    # True can help avoid unexpected web page changes. Recommended to set to True if seeing purchase failures.
+    close_browser: True
+
+    # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
+    burst:
+        # number of purchases to make in a row
+        count: 1
+
+        # minimum gap in seconds between each burst. Each burst will be spaced out by at least this much.
+        min_gap: 79200
+
+        # random extra time up to this number added to burst min_gap between gaps to allow for some randomness in the timing
+        time_variance: 14400
+
+    # Spaces out purchases evenly with some randomness through the month. Use this mode if running on a server or computer that never sleeps.
+    spread:
+        # minimum gap in seconds between each purchase. This usually only applies if you start this program late in the month.
+        min_gap: 17280
+
+        # extra time before & after each scheduled purchase to allow for some randomness in the timing
+        time_variance: 14400
+
+
 optimum_bill_pay:
 
     # change this to True after configuring the options below

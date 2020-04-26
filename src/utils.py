@@ -23,8 +23,8 @@ def cents_to_str(cents):
 # '$77.84' -> 7784
 # 'balance: 1.50' -> 150
 # '0.05' -> 5
-def str_to_cents(str):
-    return int(''.join([c for c in str if c.isdigit()]))
+def str_to_cents(string):
+    return int(''.join([c for c in string if c.isdigit()]))
 
 
 # This lambda function finishes the moment either element is visible.
@@ -50,3 +50,30 @@ def is_logged_in(driver, timeout=30, logged_out_element=None, logged_in_element=
     else:
         LOGGER.info('login_status=logged_in')
         return True
+
+
+# Useful with WebDriverWait() and multiple expected conditions.
+# This function finishes the moment any condition returns true.
+# Example usage:
+#
+# try:
+#     WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
+#         expected_conditions.element_to_be_clickable((By.ID, 'some-element-id')),
+#         expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'some text on webpage')]")),
+#         expected_conditions.element_to_be_clickable((By.XPATH, "//img[contains(@src,'someDescription')]"))
+#     ))
+# except TimeoutException:
+#     LOGGER.info('Timed out looking for expected conditions after 30 seconds')
+class AnyExpectedCondition:
+    def __init__(self, *args):
+        self.expected_conditions = args
+
+    def __call__(self, driver):
+        for condition in self.expected_conditions:
+            try:
+                if condition(driver):
+                    return True
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception:
+                pass
