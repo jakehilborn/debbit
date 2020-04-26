@@ -28,13 +28,13 @@ def web_automation(driver, merchant, amount):
             WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.ID, 'nucaptcha-answer')))
             LOGGER.info('captcha detected')
             input('''
-        Detected first time run captcha. Please follow these one-time steps. Future runs won't need this.
+Detected first time run captcha. Please follow these one-time steps. Future runs won't need this.
 
-        1. Open the Firefox window that debbit created.
-        2. Enter your user, pass, and the moving characters manually.
-        3. Click the "Sign In" button.
-        4. Click on this terminal window and hit "Enter" to continue running debbit.
-        ''')
+1. Open the Firefox window that debbit created.
+2. Enter your user, pass, and the moving characters manually.
+3. Click the "Sign In" button.
+4. Click on this terminal window and hit "Enter" to continue running debbit.
+''')
         except TimeoutException:
             pass
 
