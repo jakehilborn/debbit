@@ -20,7 +20,7 @@ def web_automation(driver, merchant, amount):
     # Browse to login page first so that cookies can be set properly.
     driver.get('https://www.att.com/my/#/passthrough/overview')
 
-    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, "password")))
+    WebDriverWait(driver, 120).until(expected_conditions.element_to_be_clickable((By.ID, "password")))
 
     try:
         driver.find_element_by_id('userName').send_keys(merchant.usr)
