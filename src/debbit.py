@@ -363,8 +363,8 @@ def get_webdriver(merchant):
     return driver_store[merchant.name]['driver']
 
 
-def release_webdriver(merchant, force):
-    if merchant.close_browser or force:
+def release_webdriver(merchant, force_release):
+    if merchant.close_browser or force_release:
         try:
             driver = driver_store[merchant.name]['driver']
             del driver_store[merchant.name]
