@@ -28,13 +28,17 @@ def main():
     if not state:
         LOGGER.info('No purchases yet complete for ' + now.strftime('%B %Y'))
 
-    for merchant_name in state:
-        cur_purchases = state[merchant_name]['purchase_count']
-        LOGGER.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
-
+    for merchant_id in state:
+        cur_purchases = state[merchant_id]['purchase_count']
+        LOGGER.info(str(cur_purchases) + ' ' + merchant_id + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
     LOGGER.info('')
-    for name, merchant_module in scan_merchant_modules().items():
-        load_merchant(name, merchant_module.web_automation)
+
+    for card in CONFIG:
+        if card == 'mode' or card == 'hide_web_browser':  # global config stored at same level as cards, filter them out
+            continue
+
+        for merchant_name, merchant_conf in CONFIG[card].items():
+            load_merchant(card, merchant_name, merchant_conf)
 
 
 def load_state(year, month):
@@ -48,29 +52,18 @@ def load_state(year, month):
         return {}
 
 
-def scan_merchant_modules():
-    merchant_files = os.listdir(absolute_path('merchants'))
-    merchant_modules = {}
-    for merchant_file in merchant_files:
-        if merchant_file.endswith('.py') and merchant_file != '__init__.py':
-            merchant_modules[merchant_file[:-3]] = __import__('merchants.' + merchant_file[:-3] , fromlist=["*"])
+def load_merchant(card, merchant_name, merchant_conf):
+    try:
+        web_automation = __import__('merchants.' + merchant_name, fromlist=["*"]).web_automation
+    except Exception as e:
+        sys.exit(1)  # TODO src/binary exceptions
 
-    return merchant_modules
+    merchant = Merchant(card, merchant_name, web_automation, merchant_conf)
 
-
-def load_merchant(name, web_automation):
-    if name not in CONFIG:
-        return
-
-    if CONFIG[name]['enabled'] == True:  # need this to be explicitly set to True, not just any truthy value
-        merchant = Merchant(name, web_automation, CONFIG[name])
-
-        if CONFIG['mode'] == 'spread':
-            start_schedule(merchant)
-        if CONFIG['mode'] == 'burst':
-            Thread(target=burst_loop, args=(merchant,)).start()
-    else:
-        LOGGER.info(name + ' disabled, set enabled: True in config.txt to enable.')
+    if CONFIG['mode'] == 'spread':
+        start_schedule(merchant)
+    if CONFIG['mode'] == 'burst':
+        Thread(target=burst_loop, args=(merchant,)).start()
 
 
 def burst_loop(merchant):
@@ -83,18 +76,18 @@ def burst_loop(merchant):
         state = load_state(now.year, now.month)
         this_burst_count = merchant.burst_count
 
-        if merchant.name not in state:
+        if merchant.id not in state:
             cur_purchases = 0
             prev_burst_time = 0
         else:
-            cur_purchases = state[merchant.name]['purchase_count']
+            cur_purchases = state[merchant.id]['purchase_count']
 
-            if len(state[merchant.name]['transactions']) < merchant.burst_count:
+            if len(state[merchant.id]['transactions']) < merchant.burst_count:
                 prev_burst_time = 0
             else:
-                prev_burst_time = state[merchant.name]['transactions'][merchant.burst_count * -1]['unix_time']
+                prev_burst_time = state[merchant.id]['transactions'][merchant.burst_count * -1]['unix_time']
 
-            for transaction in state[merchant.name]['transactions'][-min(len(state[merchant.name]['transactions']), merchant.burst_count):]:
+            for transaction in state[merchant.id]['transactions'][-min(len(state[merchant.id]['transactions']), merchant.burst_count):]:
                 if transaction['unix_time'] > int(now.timestamp()) - min(merchant.burst_min_gap, 3600):
                     this_burst_count -= 1  # Program was stopped during burst within 60 minutes ago, count how many occurred within the last partial burst
 
@@ -106,14 +99,14 @@ def burst_loop(merchant):
                 and cur_purchases < merchant.total_purchases \
                 and now > skip_time:
 
-            LOGGER.info('Now bursting ' + str(this_burst_count) + ' ' + merchant.name + ' ' + plural('purchase', this_burst_count))
+            LOGGER.info('Now bursting ' + str(this_burst_count) + ' ' + merchant.id + ' ' + plural('purchase', this_burst_count))
 
             result = web_automation_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
             for _ in range(this_burst_count - 1):
                 if result != Result.success:
                     break
                 sleep_time = 30
-                LOGGER.info('Waiting ' + str(sleep_time) + ' seconds before next ' + merchant.name + ' purchase')
+                LOGGER.info('Waiting ' + str(sleep_time) + ' seconds before next ' + merchant.id + ' purchase')
                 time.sleep(sleep_time)
                 result = web_automation_wrapper(merchant)
 
@@ -156,21 +149,21 @@ def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cu
     if next_burst_time < skip_time:
         next_burst_time = skip_time
 
-    LOGGER.info('Bursting next ' + str(next_burst_count) + ' ' + merchant.name + ' ' + plural('purchase', next_burst_count) + ' after ' + next_burst_time.strftime("%Y-%m-%d %I:%M%p"))
+    LOGGER.info('Bursting next ' + str(next_burst_count) + ' ' + merchant.id + ' ' + plural('purchase', next_burst_count) + ' after ' + next_burst_time.strftime("%Y-%m-%d %I:%M%p"))
 
 
 def start_schedule(merchant):
     now = datetime.now()
     state = load_state(now.year, now.month)
 
-    if merchant.name not in state:  # first run of the month
+    if merchant.id not in state:  # first run of the month
         if now.day >= merchant.min_day:
             spread_recursion(merchant)
         else:
             start_offset = (datetime(now.year, now.month, merchant.min_day) - now).total_seconds()
-            LOGGER.info('Scheduling ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
+            LOGGER.info('Scheduling ' + merchant.id + ' at ' + formatted_date_of_offset(now, start_offset))
             Timer(start_offset, spread_recursion, [merchant]).start()
-    elif state[merchant.name]['purchase_count'] < merchant.total_purchases and now.timestamp() - state[merchant.name]['transactions'][-1]['unix_time'] > merchant.spread_min_gap:
+    elif state[merchant.id]['purchase_count'] < merchant.total_purchases and now.timestamp() - state[merchant.id]['transactions'][-1]['unix_time'] > merchant.spread_min_gap:
         spread_recursion(merchant)
     else:
         schedule_next(merchant)
@@ -179,7 +172,7 @@ def start_schedule(merchant):
 def schedule_next(merchant):
     now = datetime.now()
     state = load_state(now.year, now.month)
-    cur_purchases = state[merchant.name]['purchase_count'] if merchant.name in state else 0
+    cur_purchases = state[merchant.id]['purchase_count'] if merchant.id in state else 0
 
     if cur_purchases < merchant.total_purchases:
         remaining_purchases = merchant.total_purchases - cur_purchases
@@ -204,13 +197,13 @@ def schedule_next(merchant):
         range_min = (datetime(year, month, merchant.min_day) - now).total_seconds()
 
         if range_min <= 0:
-            LOGGER.error('Fatal error, could not determine date of next month when scheduling ' + merchant.name)
+            LOGGER.error('Fatal error, could not determine date of next month when scheduling ' + merchant.id)
             return
 
         range_max = range_min + merchant.spread_time_variance
 
     start_offset = random.randint(int(range_min), int(range_max))
-    LOGGER.info('Scheduling next ' + merchant.name + ' at ' + formatted_date_of_offset(now, start_offset))
+    LOGGER.info('Scheduling next ' + merchant.id + ' at ' + formatted_date_of_offset(now, start_offset))
     LOGGER.info('')
     Timer(start_offset, spread_recursion, [merchant]).start()
 
@@ -220,9 +213,9 @@ def spread_recursion(merchant):
     schedule_next(merchant)
 
 
-def record_transaction(merchant_name, amount):
+def record_transaction(merchant_id, amount):
     now = datetime.now()
-    LOGGER.info('Recording successful ' + merchant_name + ' purchase')
+    LOGGER.info('Recording successful ' + merchant_id + ' purchase')
 
     if not os.path.exists(absolute_path('state')):
         os.mkdir(absolute_path('state'))
@@ -234,15 +227,15 @@ def record_transaction(merchant_name, amount):
 
     state = load_state(now.year, now.month)
 
-    if merchant_name not in state:
-        state[merchant_name] = {
+    if merchant_id not in state:
+        state[merchant_id] = {
             'purchase_count': 0,
             'transactions': []
         }
 
-    cur_purchases = state[merchant_name]['purchase_count'] + 1
-    state[merchant_name]['purchase_count'] = cur_purchases
-    state[merchant_name]['transactions'].append({
+    cur_purchases = state[merchant_id]['purchase_count'] + 1
+    state[merchant_id]['purchase_count'] = cur_purchases
+    state[merchant_id]['transactions'].append({
         'amount': str(amount) + ' cents',
         'human_time': now.strftime("%Y-%m-%d %I:%M%p"),
         'unix_time': int(now.timestamp())
@@ -253,7 +246,7 @@ def record_transaction(merchant_name, amount):
 
     STATE_WRITE_LOCK.release()
 
-    LOGGER.info(str(cur_purchases) + ' ' + merchant_name + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
+    LOGGER.info(str(cur_purchases) + ' ' + merchant_id + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
 
 
 def formatted_date_of_offset(now, start_offset):
@@ -267,7 +260,7 @@ def web_automation_wrapper(merchant):
         driver = get_webdriver(merchant)
         amount = random.randint(merchant.amount_min, merchant.amount_max)
         error_msg = 'Refer to prior log messages for error details'
-        LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
+        LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.id + ' now')
         try:
             result = merchant.web_automation(driver, merchant, amount)
         except (KeyboardInterrupt, SystemExit):
@@ -277,18 +270,18 @@ def web_automation_wrapper(merchant):
             error_msg = traceback.format_exc()
 
         if result == Result.failed:
-            LOGGER.error(merchant.name + ' error: ' + error_msg)
+            LOGGER.error(merchant.id + ' error: ' + error_msg)
             failures += 1
 
             record_failure(driver, merchant, error_msg)
             release_webdriver(merchant, False)
 
             if failures < threshold:
-                LOGGER.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.name + ' attempts done, trying again in ' + str(60 * failures ** 4) + ' seconds')
+                LOGGER.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.id + ' attempts done, trying again in ' + str(60 * failures ** 4) + ' seconds')
                 time.sleep(60 * failures ** 4)  # try again in 1min, 16min, 1.3hr, 4.3hr, 10.4hr
                 continue
             else:
-                exit_msg = merchant.name + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run debbit to try again.'
+                exit_msg = merchant.id + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
                 LOGGER.error(exit_msg)
                 release_webdriver(merchant, True)
                 raise Exception(exit_msg)  # exits this merchant's thread, not entire program
@@ -296,10 +289,10 @@ def web_automation_wrapper(merchant):
         release_webdriver(merchant, False)
 
         if result == Result.success:
-            record_transaction(merchant.name, amount)
+            record_transaction(merchant.id, amount)
 
         if result == Result.unverified:
-            LOGGER.error('Unable to verify ' + merchant.name + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run debbit to try again.')
+            LOGGER.error('Unable to verify ' + merchant.id + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.')
             release_webdriver(merchant, True)
             sys.exit(1)  # exits this merchant's thread, not entire program
 
@@ -343,11 +336,11 @@ def scrub_sensitive_data(data, merchant):
 def get_webdriver(merchant):
     WEB_DRIVER_LOCK.acquire()  # Only execute one purchase at a time so the console log messages don't inter mix
 
-    if merchant.name not in driver_store:
+    if merchant.id not in driver_store:
         options = Options()
         options.headless = CONFIG['hide_web_browser']
         try:
-            driver_store[merchant.name] = {
+            driver_store[merchant.id] = {
                 'driver': webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'), service_log_path=os.devnull),
                 'window': None
             }
@@ -357,25 +350,25 @@ def get_webdriver(merchant):
             WEB_DRIVER_LOCK.release()
             sys.exit(1)
 
-    if driver_store[merchant.name]['window']:  # if browser window minimized, restore to previous position/size
-        driver_store[merchant.name]['driver'].set_window_rect(**driver_store[merchant.name]['window'])
+    if driver_store[merchant.id]['window']:  # if browser window minimized, restore to previous position/size
+        driver_store[merchant.id]['driver'].set_window_rect(**driver_store[merchant.id]['window'])
 
-    return driver_store[merchant.name]['driver']
+    return driver_store[merchant.id]['driver']
 
 
 def release_webdriver(merchant, force_release):
     if merchant.close_browser or force_release:
         try:
-            driver = driver_store[merchant.name]['driver']
-            del driver_store[merchant.name]
+            driver = driver_store[merchant.id]['driver']
+            del driver_store[merchant.id]
             driver.close()
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception:
             pass
     elif not CONFIG['hide_web_browser']:  # Since not headless mode, keep browser open but minimize the window
-        driver_store[merchant.name]['window'] = driver_store[merchant.name]['driver'].get_window_rect()
-        driver_store[merchant.name]['driver'].minimize_window()
+        driver_store[merchant.id]['window'] = driver_store[merchant.id]['driver'].get_window_rect()
+        driver_store[merchant.id]['driver'].minimize_window()
 
     try:
         WEB_DRIVER_LOCK.release()
@@ -397,7 +390,8 @@ def plural(word, count):
 
 
 class Merchant:
-    def __init__(self, name, web_automation, config_entry):
+    def __init__(self, card, name, web_automation, config_entry):
+        self.id = str(card) + ':' + name
         self.name = name
         self.web_automation = web_automation
 
@@ -455,15 +449,14 @@ if __name__ == '__main__':
             to_open = candidate_absolute_path
             break
 
-    if to_open == '':
+    if to_open == '':  # TODO revisit
         LOGGER.error('Config file not found.')
         LOGGER.error('Copy and rename sample_config.txt to config.yml or config.txt.')
         LOGGER.error('Then, put your credentials and debit card info in the file.')
-    
         sys.exit(1)
 
     with open(to_open, 'r', encoding='utf-8') as config_f:
-        CONFIG = yaml.safe_load(config_f.read())
+        CONFIG = yaml.safe_load(config_f.read())  # TODO wrap with try catch?
 
     main()
 
