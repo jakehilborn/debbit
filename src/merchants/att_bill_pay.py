@@ -17,57 +17,61 @@ LOGGER = logging.getLogger('debbit')
 
 
 def web_automation(driver, merchant, amount):
-    # Browse to login page first so that cookies can be set properly.
     driver.get('https://www.att.com/my/#/passthrough/overview')
 
-    WebDriverWait(driver, 120).until(expected_conditions.element_to_be_clickable((By.ID, "password")))
-
-    try:
-        driver.find_element_by_id('userName').send_keys(merchant.usr)
-    except common.exceptions.ElementNotInteractableException:
-        pass
-    try:
-        driver.find_element_by_xpath("//a[@value='" + merchant.usr + "']").click()
-    except common.exceptions.NoSuchElementException:
-        pass
-
-    driver.find_element_by_id('password').send_keys(merchant.psw)
-    driver.find_element_by_xpath("//button[contains(@id,'loginButton')]").click()
-
-    # Wait for potential promotions screen, regular account overview, or OTP flow
-    WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
+    # Wait until login screen, promotion pop-up, or account dashboard shows.
+    WebDriverWait(driver, 120).until(utils.AnyExpectedCondition(
+        expected_conditions.element_to_be_clickable((By.ID, "password")),
         expected_conditions.element_to_be_clickable((By.XPATH, "//img[contains(@src,'btnNoThanks')]")),
         expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]")),
-        expected_conditions.element_to_be_clickable((By.NAME, "Send code"))
     ))
 
-    try:  # OTP text validation
-        driver.find_element_by_name("Send code").click()
-        WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, "verificationCodeInput")))
-        sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'We sent it to')]").text.strip()
-        LOGGER.info(sent_to_text)
-        LOGGER.info('Enter OTP here: ')
-        otp = input()
+    if not driver.find_elements_by_id('password'):  # password field found, need to log in
+        try:
+            driver.find_element_by_id('userName').send_keys(merchant.usr)
+        except common.exceptions.ElementNotInteractableException:
+            pass
+        try:
+            driver.find_element_by_xpath("//a[@value='" + merchant.usr + "']").click()
+        except common.exceptions.NoSuchElementException:
+            pass
 
-        elem = driver.find_element_by_id("verificationCodeInput")
-        elem.send_keys(otp)
-        elem.send_keys(Keys.ENTER)
-    except common.exceptions.NoSuchElementException:
-        pass
+        driver.find_element_by_id('password').send_keys(merchant.psw)
+        driver.find_element_by_xpath("//button[contains(@id,'loginButton')]").click()
 
-    # Wait for potential promotions screen or regular account overview
-    WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
-        expected_conditions.element_to_be_clickable((By.XPATH, "//img[contains(@src,'btnNoThanks')]")),
-        expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]"))
-    ))
+        # Wait for potential promotions screen, regular account overview, or OTP flow
+        WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
+            expected_conditions.element_to_be_clickable((By.XPATH, "//img[contains(@src,'btnNoThanks')]")),
+            expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]")),
+            expected_conditions.element_to_be_clickable((By.NAME, "Send code"))
+        ))
 
-    try:  # Dismiss promotions screen if it appeared
-        driver.find_element_by_xpath("//*[contains(@src,'btnNoThanks')]").click()
-        WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Make a payment')]")))
-    except common.exceptions.NoSuchElementException:
-        pass
+        try:  # OTP text validation
+            driver.find_element_by_name("Send code").click()
+            WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, "verificationCodeInput")))
+            sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'We sent it to')]").text.strip()
+            LOGGER.info(sent_to_text)
+            LOGGER.info('Enter OTP here: ')
+            otp = input()
 
-    # Navigate from main account screen to payment screen. Change URL rather than clicking on button because the latter sometimes seems to stall.
+            elem = driver.find_element_by_id("verificationCodeInput")
+            elem.send_keys(otp)
+            elem.send_keys(Keys.ENTER)
+        except common.exceptions.NoSuchElementException:
+            pass
+
+        # Wait for potential promotions screen or regular account overview
+        WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
+            expected_conditions.element_to_be_clickable((By.XPATH, "//img[contains(@src,'btnNoThanks')]")),
+            expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]"))
+        ))
+
+        try:  # Dismiss promotions screen if it appeared
+            driver.find_element_by_xpath("//*[contains(@src,'btnNoThanks')]").click()
+            WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Make a payment')]")))
+        except common.exceptions.NoSuchElementException:
+            pass
+
     driver.get("https://www.att.com/my/#/makePayment")
 
     # Enter amount and select payment card
@@ -76,13 +80,13 @@ def web_automation(driver, merchant, amount):
     elem.clear()
     elem.send_keys(utils.cents_to_str(amount))
     elem = driver.find_element_by_id("paymentMethod0")
-    beforeFirstPaymentCard = "Select Payment Method"
-    afterLastPaymentCard = "New checking / savings account"
-    while elem.get_attribute("value").lower() != beforeFirstPaymentCard.lower():
+    before_first_payment_card = "Select Payment Method"
+    after_last_payment_card = "New checking / savings account"
+    while elem.get_attribute("value").lower() != before_first_payment_card.lower():
         elem.send_keys(Keys.UP)
-    while elem.get_attribute("value").lower() != merchant.card.lower() and elem.get_attribute("value").lower() != afterLastPaymentCard.lower():
+    while elem.get_attribute("value").lower() != merchant.card.lower() and elem.get_attribute("value").lower() != after_last_payment_card.lower():
         elem.send_keys(Keys.DOWN)
-    if elem.get_attribute("value").lower() == afterLastPaymentCard.lower():
+    if elem.get_attribute("value").lower() == after_last_payment_card.lower():
         raise Exception("Payment method " + merchant.card + " not found in list of saved payment methods")
 
     # Continue
