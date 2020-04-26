@@ -264,7 +264,7 @@ def web_automation_wrapper(merchant):
     failures = 0
     threshold = 5
     while failures < threshold:
-        driver = get_webdriver()
+        driver = get_webdriver(merchant)
         amount = random.randint(merchant.amount_min, merchant.amount_max)
         error_msg = 'Refer to prior log messages for error details'
         LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.name + ' now')
@@ -281,7 +281,7 @@ def web_automation_wrapper(merchant):
             failures += 1
 
             record_failure(driver, merchant, error_msg)
-            close_webdriver(driver)
+            release_webdriver(merchant, False)
 
             if failures < threshold:
                 LOGGER.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.name + ' attempts done, trying again in ' + str(60 * failures ** 4) + ' seconds')
@@ -290,15 +290,17 @@ def web_automation_wrapper(merchant):
             else:
                 exit_msg = merchant.name + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run debbit to try again.'
                 LOGGER.error(exit_msg)
-                raise Exception(exit_msg)
+                release_webdriver(merchant, True)
+                raise Exception(exit_msg)  # exits this merchant's thread, not entire program
 
-        close_webdriver(driver)
+        release_webdriver(merchant, False)
 
         if result == Result.success:
             record_transaction(merchant.name, amount)
 
         if result == Result.unverified:
             LOGGER.error('Unable to verify ' + merchant.name + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.name + '. Stop and re-run debbit to try again.')
+            release_webdriver(merchant, True)
             sys.exit(1)  # exits this merchant's thread, not entire program
 
         return result
@@ -338,26 +340,42 @@ def scrub_sensitive_data(data, merchant):
         .replace(merchant.card[-4:], '***card***')  # last 4 digits of card
 
 
-def get_webdriver():
-    WEB_DRIVER_LOCK.acquire()
-    options = Options()
-    options.headless = CONFIG['hide_web_browser']
-    try:
-        return webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'), service_log_path=os.devnull)
-    except SessionNotCreatedException:
-        LOGGER.error('')
-        LOGGER.error('Firefox not found. Please install the latest version of Firefox and try again.')
-        WEB_DRIVER_LOCK.release()
-        sys.exit(1)
+def get_webdriver(merchant):
+    WEB_DRIVER_LOCK.acquire()  # Only execute one purchase at a time so the console log messages don't inter mix
+
+    if merchant.name not in driver_store:
+        options = Options()
+        options.headless = CONFIG['hide_web_browser']
+        try:
+            driver_store[merchant.name] = {
+                'driver': webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'), service_log_path=os.devnull),
+                'window': None
+            }
+        except SessionNotCreatedException:
+            LOGGER.error('')
+            LOGGER.error('Firefox not found. Please install the latest version of Firefox and try again.')
+            WEB_DRIVER_LOCK.release()
+            sys.exit(1)
+
+    if driver_store[merchant.name]['window']:  # if browser window minimized, restore to previous position/size
+        driver_store[merchant.name]['driver'].set_window_rect(**driver_store[merchant.name]['window'])
+
+    return driver_store[merchant.name]['driver']
 
 
-def close_webdriver(driver):
-    try:
-        driver.close()
-    except (KeyboardInterrupt, SystemExit):
-        raise
-    except Exception:
-        pass
+def release_webdriver(merchant, force_release):
+    if merchant.close_browser or force_release:
+        try:
+            driver = driver_store[merchant.name]['driver']
+            del driver_store[merchant.name]
+            driver.close()
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except Exception:
+            pass
+    elif not CONFIG['hide_web_browser']:  # Since not headless mode, keep browser open but minimize the window
+        driver_store[merchant.name]['window'] = driver_store[merchant.name]['driver'].get_window_rect()
+        driver_store[merchant.name]['driver'].minimize_window()
 
     try:
         WEB_DRIVER_LOCK.release()
@@ -386,6 +404,7 @@ class Merchant:
         self.total_purchases = config_entry['total_purchases']
         self.amount_min = config_entry['amount_min']
         self.amount_max = config_entry['amount_max']
+        self.close_browser = config_entry['close_browser']
         self.burst_count = config_entry['burst']['count']
         self.burst_min_gap = config_entry['burst']['min_gap']
         self.burst_time_variance = config_entry['burst']['time_variance']
@@ -416,6 +435,9 @@ if __name__ == '__main__':
     WEB_DRIVER_LOCK = Lock()
     DAYS_IN_MONTH = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
     VERSION = 'v1.0.1-dev'
+
+    # configure cross thread global vars
+    driver_store = {}
 
     LOGGER.info('       __     __    __    _ __ ')
     LOGGER.info('  ____/ /__  / /_  / /_  (_) /_')
@@ -454,4 +476,5 @@ Amazon captcha support
 Check for internet connection post wake-up before bursting
 Propagate error details to failures/ files when returning Result.failure
 Result.unverified should record details to failures/ directory
+Use a class for State to improve readability
 '''

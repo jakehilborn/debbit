@@ -8,64 +8,68 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
-from utils import cents_to_str
+import utils
 from result import Result
 
 LOGGER = logging.getLogger('debbit')
 
 
 def web_automation(driver, merchant, amount):
-
     driver.get('https://www.amazon.com/asv/reload/order')
-    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")))
 
-    try:
-        driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
-    except ElementClickInterceptedException:  # spinner blocking button
-        time.sleep(3)
-        driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
+    logged_in = utils.is_logged_in(driver, timeout=30,
+        logged_out_element=(By.XPATH, "//button[contains(text(),'Sign In to Continue')]"),
+        logged_in_element=(By.XPATH, "//button[contains(text(),'Reload $')]")
+    )
 
-    driver.find_element_by_id('ap_email').send_keys(merchant.usr)
+    if not logged_in:
+        try:
+            driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
+        except ElementClickInterceptedException:  # spinner blocking button
+            time.sleep(3)
+            driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
 
-    try:  # a/b tested new UI flow
-        driver.find_element_by_id('continue').click()  # if not exists, exception is raised
-    except common.exceptions.NoSuchElementException:  # a/b tested old UI flow
-        pass
+        driver.find_element_by_id('ap_email').send_keys(merchant.usr)
 
-    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'ap_password')))
-    driver.find_element_by_id('ap_password').send_keys(merchant.psw)
-    driver.find_element_by_id('signInSubmit').click()
+        try:  # a/b tested new UI flow
+            driver.find_element_by_id('continue').click()  # if not exists, exception is raised
+        except common.exceptions.NoSuchElementException:  # a/b tested old UI flow
+            pass
 
-    try:  # OTP email validation
-        WebDriverWait(driver, 3).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
-        otp_flow = True
-    except TimeoutException:
-        otp_flow = False
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'ap_password')))
+        driver.find_element_by_id('ap_password').send_keys(merchant.psw)
+        driver.find_element_by_id('signInSubmit').click()
 
-    try:
-        driver.find_element_by_xpath("//*[contains(text(),'one-time pass')]").click()
-        otp_flow = True
-    except common.exceptions.NoSuchElementException:
-        pass
+        try:  # OTP email validation
+            WebDriverWait(driver, 3).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
+            otp_flow = True
+        except TimeoutException:
+            otp_flow = False
 
-    if otp_flow:
-        driver.find_element_by_id('continue').click()
+        try:
+            driver.find_element_by_xpath("//*[contains(text(),'one-time pass')]").click()
+            otp_flow = True
+        except common.exceptions.NoSuchElementException:
+            pass
 
-        WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input")))
-        sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
-        LOGGER.info(sent_to_text)
-        LOGGER.info('Enter OTP here:')
-        otp = input()
+        if otp_flow:
+            driver.find_element_by_id('continue').click()
 
-        elem = driver.find_element_by_xpath("//input")
-        elem.send_keys(otp)
-        elem.send_keys(Keys.TAB)
-        elem.send_keys(Keys.ENTER)
+            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input")))
+            sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
+            LOGGER.info(sent_to_text)
+            LOGGER.info('Enter OTP here:')
+            otp = input()
+
+            elem = driver.find_element_by_xpath("//input")
+            elem.send_keys(otp)
+            elem.send_keys(Keys.TAB)
+            elem.send_keys(Keys.ENTER)
 
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
-    driver.find_element_by_id('asv-manual-reload-amount').send_keys(cents_to_str(amount))
+    driver.find_element_by_id('asv-manual-reload-amount').send_keys(utils.cents_to_str(amount))
     driver.find_element_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]").click()
-    driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
+    driver.find_element_by_xpath("//button[contains(text(),'Reload $" + utils.cents_to_str(amount) + "')]").click()
 
     time.sleep(10)  # give page a chance to load
     if 'thank-you' not in driver.current_url:
@@ -74,9 +78,9 @@ def web_automation(driver, merchant, amount):
         elem.send_keys(merchant.card)
         elem.send_keys(Keys.TAB)
         elem.send_keys(Keys.ENTER)
-        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + utils.cents_to_str(amount) + "')]")))
         time.sleep(1)
-        driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
+        driver.find_element_by_xpath("//button[contains(text(),'Reload $" + utils.cents_to_str(amount) + "')]").click()
         time.sleep(10)  # give page a chance to load
 
     if 'thank-you' not in driver.current_url:
