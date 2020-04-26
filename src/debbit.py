@@ -357,7 +357,7 @@ def get_webdriver(merchant):
             WEB_DRIVER_LOCK.release()
             sys.exit(1)
 
-    if driver_store[merchant.name]['window']:
+    if driver_store[merchant.name]['window']:  # if browser window minimized, restore to previous position/size
         driver_store[merchant.name]['driver'].set_window_rect(**driver_store[merchant.name]['window'])
 
     return driver_store[merchant.name]['driver']
@@ -366,8 +366,9 @@ def get_webdriver(merchant):
 def release_webdriver(merchant, force):
     if merchant.close_browser or force:
         try:
-            driver_store[merchant.name]['driver'].close()
+            driver = driver_store[merchant.name]['driver']
             del driver_store[merchant.name]
+            driver.close()
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception:
@@ -393,22 +394,6 @@ def plural(word, count):
     if count == 1:
         return word
     return word + 's'
-
-
-def handle_exit():
-    print('handle_exit called')
-    # for driver in driver_store.values():
-    #     try:
-    #         driver.close()
-    #         print('driver closed')
-    #     except Exception:
-    #         print('error closing driver')
-    #         pass
-
-
-# class Driver:
-#     def __init__(self, driver):
-#         self.driver = driver
 
 
 class Merchant:
@@ -450,12 +435,9 @@ if __name__ == '__main__':
     WEB_DRIVER_LOCK = Lock()
     DAYS_IN_MONTH = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
     VERSION = 'v1.0.1-dev'
-    driver_store = {}
 
-    # configure pre-exit cleanup
-    # atexit.register(handle_exit)
-    # signal.signal(signal.SIGTERM, handle_exit)
-    # signal.signal(signal.SIGINT, handle_exit)
+    # configure cross thread global vars
+    driver_store = {}
 
     LOGGER.info('       __     __    __    _ __ ')
     LOGGER.info('  ____/ /__  / /_  / /_  (_) /_')
