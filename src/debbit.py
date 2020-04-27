@@ -398,17 +398,23 @@ class Merchant:
         self.total_purchases = config_entry['total_purchases']
         self.amount_min = config_entry['amount_min']
         self.amount_max = config_entry['amount_max']
-        self.close_browser = config_entry['close_browser']
-        self.burst_count = config_entry['burst']['count']
-        self.burst_min_gap = config_entry['burst']['min_gap']
-        self.burst_time_variance = config_entry['burst']['time_variance']
-        self.spread_min_gap = config_entry['spread']['min_gap']
-        self.spread_time_variance = config_entry['spread']['time_variance']
-        self.min_day = config_entry['min_day']
-        self.max_day = config_entry['max_day']
         self.usr = str(config_entry['usr'])
         self.psw = str(config_entry['psw'])
         self.card = str(config_entry['card'])
+        self.close_browser = config_entry['close_browser']
+
+        if CONFIG['mode'] == 'burst' and not config_entry.get('burst_count'):
+            LOGGER.error(self.id + ' config is missing "burst_count"')
+            sys.exit(1)
+        self.burst_count = config_entry['burst_count']
+
+        # Optional config default values.
+        self.min_day = config_entry.get('timing', {}).get('min_day') or 2  # avoid off by one errors in all systems
+        self.max_day = config_entry.get('timing', {}).get('max_day')  # calculated dynamically if None is returned
+        self.burst_min_gap = config_entry.get('timing', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
+        self.burst_time_variance = config_entry.get('timing', {}).get('burst', {}).get('time_variance') or 14400  # 4 hours
+        self.spread_min_gap = config_entry.get('timing', {}).get('spread', {}).get('min_gap') or 14400  # 4 hours
+        self.spread_time_variance = config_entry.get('timing', {}).get('spread', {}).get('time_variance') or 14400  # 4 hours
 
 
 if __name__ == '__main__':
