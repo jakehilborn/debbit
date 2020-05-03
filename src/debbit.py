@@ -460,30 +460,33 @@ if __name__ == '__main__':
     LOGGER.info('\__,_/\___/_.___/_.___/_/\__/  ' + VERSION)
     LOGGER.info('')
 
-    files = ['config.yml', 'config.txt']
-    to_open = ''
-
-    for file in files:
-        candidate_absolute_path = absolute_path(file)
-        if (os.path.exists(candidate_absolute_path)):
-            to_open = candidate_absolute_path
+    config_to_open = None
+    for file in ['config.yml', 'config.txt']:
+        if os.path.exists(absolute_path(file)):
+            config_to_open = file
             break
 
-    if to_open == '':  # TODO revisit
+    if config_to_open is None:
         LOGGER.error('Config file not found.')
         LOGGER.error('Copy and rename sample_config.txt to config.yml or config.txt.')
         LOGGER.error('Then, put your credentials and debit card info in the file.')
         sys.exit(1)
 
-    with open(to_open, 'r', encoding='utf-8') as config_f:
-        CONFIG = yaml.safe_load(config_f.read())  # TODO wrap with try catch due to malformed yaml?
+    with open(absolute_path(config_to_open), 'r', encoding='utf-8') as config_f:
+        try:
+            CONFIG = yaml.safe_load(config_f.read())
+        except yaml.YAMLError as e:
+            error_msg = '\n\nFormatting error in ' + config_to_open + '. Ensure ' + config_to_open + ' has the same structure and spacing as the examples in INSTRUCTIONS.txt.'
+            if hasattr(e, 'problem_mark'):
+                error_msg += '\n\n' + str(e.problem_mark)
+            LOGGER.error(error_msg)
+            sys.exit(1)
 
     main()
 
 '''
 TODO
 
-Support multiple cards per merchant
 Unit test suite
 Amazon captcha support
 Check for internet connection post wake-up before bursting
