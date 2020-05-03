@@ -6,11 +6,11 @@
 mode: burst
 hide_web_browser: False
 
-some_card_description:
-- example_merchant:
-    total_purchases: 12
-    amount_min: 50
-    amount_max: 59
+any_card_description:
+  example_merchant:
+    total_purchases: 20
+    amount_min: 10
+    amount_max: 25
     usr: user
     psw: pass
     card: 1234
