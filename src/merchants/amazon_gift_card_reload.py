@@ -40,8 +40,26 @@ def web_automation(driver, merchant, amount):
         driver.find_element_by_id('ap_password').send_keys(merchant.psw)
         driver.find_element_by_id('signInSubmit').click()
 
+        try:  # Anti-automation challenge
+            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'nter the characters')]")))
+
+            if driver.find_elements_by_id('ap_password'):
+                driver.find_element_by_id('ap_password').send_keys(merchant.psw)
+
+            LOGGER.info('amazon captcha detected')
+            input('''
+Anti-automation captcha detected. Please follow these steps, future runs shouldn't need captcha input if you set "close_browser: no" in config.txt.
+
+1. Open the Firefox window that debbit created.
+2. Input the captcha / other anti-automation challenges.
+3. You should now be on the gift card reload page
+4. Click on this terminal window and hit "Enter" to continue running debbit.
+''')
+        except TimeoutException:
+            pass
+
         try:  # OTP email validation
-            WebDriverWait(driver, 3).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
+            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
             otp_flow = True
         except TimeoutException:
             otp_flow = False
@@ -67,7 +85,7 @@ def web_automation(driver, merchant, amount):
             elem.send_keys(Keys.ENTER)
 
         try:
-            WebDriverWait(driver, 3).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Not now')]")))
+            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Not now')]")))
             driver.find_element_by_xpath("//*[contains(text(),'Not now')]").click()
         except TimeoutException:  # add mobile number page
             pass
