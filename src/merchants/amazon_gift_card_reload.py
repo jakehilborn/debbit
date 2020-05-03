@@ -66,6 +66,12 @@ def web_automation(driver, merchant, amount):
             elem.send_keys(Keys.TAB)
             elem.send_keys(Keys.ENTER)
 
+        try:
+            WebDriverWait(driver, 3).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Not now')]")))
+            driver.find_element_by_xpath("//*[contains(text(),'Not now')]").click()
+        except TimeoutException:  # add mobile number page
+            pass
+
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
     driver.find_element_by_id('asv-manual-reload-amount').send_keys(utils.cents_to_str(amount))
     driver.find_element_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]").click()
