@@ -29,8 +29,8 @@ def main():
         LOGGER.info('No purchases yet complete for ' + now.strftime('%B %Y'))
 
     for merchant_id in state:
-        cur_purchases = state[merchant_id]['purchase_count']
-        LOGGER.info(str(cur_purchases) + ' ' + merchant_id + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
+        cur_purchase_count = state[merchant_id]['purchase_count']
+        LOGGER.info(str(cur_purchase_count) + ' ' + merchant_id + ' ' + plural('purchase', cur_purchase_count) + ' complete for ' + now.strftime('%B %Y'))
     LOGGER.info('')
 
     for card in CONFIG:
@@ -67,41 +67,41 @@ def load_merchant(card, merchant_name, merchant_conf):
 
 
 def burst_loop(merchant):
+    # These 3 variables are modified during each loop
     suppress_logs = False
-    burst_gap = merchant.burst_min_gap
+    burst_gap = None
     skip_time = datetime.fromtimestamp(0)
 
     while True:
         now = datetime.now()
         state = load_state(now.year, now.month)
         this_burst_count = merchant.burst_count
+        prev_burst_time = 0
+        cur_purchase_count = state.get(merchant.id, {}).get('purchase_count') or 0
 
-        if merchant.id not in state:
-            cur_purchases = 0
-            prev_burst_time = 0
-        else:
-            cur_purchases = state[merchant.id]['purchase_count']
+        if not burst_gap:  # only applies to first loop
+            burst_gap = get_burst_min_gap(merchant, cur_purchase_count, now)
 
-            if len(state[merchant.id]['transactions']) < merchant.burst_count:
-                prev_burst_time = 0
-            else:
+        if merchant.id in state:
+            if len(state[merchant.id]['transactions']) >= merchant.burst_count:
                 prev_burst_time = state[merchant.id]['transactions'][merchant.burst_count * -1]['unix_time']
 
             for transaction in state[merchant.id]['transactions'][-min(len(state[merchant.id]['transactions']), merchant.burst_count):]:
-                if transaction['unix_time'] > int(now.timestamp()) - min(merchant.burst_min_gap, 3600):
+                if transaction['unix_time'] > int(now.timestamp()) - min(get_burst_min_gap(merchant, cur_purchase_count, now), 3600):
                     this_burst_count -= 1  # Program was stopped during burst within 60 minutes ago, count how many occurred within the last partial burst
 
-        this_burst_count = min(this_burst_count, merchant.total_purchases - cur_purchases)
+        this_burst_count = min(this_burst_count, merchant.total_purchases - cur_purchase_count)
 
         if prev_burst_time < int(now.timestamp()) - burst_gap \
                 and now.day >= merchant.min_day \
                 and now.day <= (merchant.max_day if merchant.max_day else DAYS_IN_MONTH[now.month] - 1) \
-                and cur_purchases < merchant.total_purchases \
+                and cur_purchase_count < merchant.total_purchases \
                 and now > skip_time:
 
             LOGGER.info('Now bursting ' + str(this_burst_count) + ' ' + merchant.id + ' ' + plural('purchase', this_burst_count))
 
             result = web_automation_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
+            cur_purchase_count += 1
             for _ in range(this_burst_count - 1):
                 if result != Result.success:
                     break
@@ -109,21 +109,35 @@ def burst_loop(merchant):
                 LOGGER.info('Waiting ' + str(sleep_time) + ' seconds before next ' + merchant.id + ' purchase')
                 time.sleep(sleep_time)
                 result = web_automation_wrapper(merchant)
+                cur_purchase_count += 1
 
-            burst_gap = merchant.burst_min_gap + random.randint(0, int(merchant.burst_time_variance))
+            burst_gap = get_burst_min_gap(merchant, cur_purchase_count, now) + random.randint(0, int(merchant.burst_time_variance))
 
             if result == Result.skipped:
                 skip_time = now + timedelta(days=1)
 
             suppress_logs = False
         elif not suppress_logs:
-            log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cur_purchases)
+            log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cur_purchase_count)
             suppress_logs = True
         else:
             time.sleep(300)
 
 
-def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cur_purchases):
+def get_burst_min_gap(merchant, cur_purchase_count, now):
+    if merchant.burst_min_gap is not None:  # Use value in config file
+        return merchant.burst_min_gap
+
+    month_end_day = merchant.max_day or DAYS_IN_MONTH[now.month] - 1
+    remaining_secs_in_month = (datetime(now.year, now.month, month_end_day) - now).total_seconds()
+
+    dynamic_burst_min_gap = int(remaining_secs_in_month / (merchant.total_purchases - cur_purchase_count) / 5)
+    default_burst_min_gap = 79200  # 22 hours
+
+    return min(dynamic_burst_min_gap, default_burst_min_gap)
+
+
+def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cur_purchase_count):
     prev_burst_plus_gap_dt = datetime.fromtimestamp(prev_burst_time + burst_gap)
     cur_month_min_day_dt = datetime(now.year, now.month, merchant.min_day)
 
@@ -139,12 +153,12 @@ def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cu
     if now.day < merchant.min_day:
         next_burst_time = prev_burst_plus_gap_dt if prev_burst_plus_gap_dt > cur_month_min_day_dt else cur_month_min_day_dt
         next_burst_count = merchant.burst_count
-    elif cur_purchases >= merchant.total_purchases or now.day > (merchant.max_day if merchant.max_day else DAYS_IN_MONTH[now.month] - 1):
+    elif cur_purchase_count >= merchant.total_purchases or now.day > (merchant.max_day if merchant.max_day else DAYS_IN_MONTH[now.month] - 1):
         next_burst_time = prev_burst_plus_gap_dt if prev_burst_plus_gap_dt > next_month_min_day_dt else next_month_min_day_dt
         next_burst_count = merchant.burst_count
     else:
         next_burst_time = prev_burst_plus_gap_dt
-        next_burst_count = min(merchant.burst_count, merchant.total_purchases - cur_purchases)
+        next_burst_count = min(merchant.burst_count, merchant.total_purchases - cur_purchase_count)
 
     if next_burst_time < skip_time:
         next_burst_time = skip_time
@@ -172,13 +186,13 @@ def start_schedule(merchant):
 def schedule_next(merchant):
     now = datetime.now()
     state = load_state(now.year, now.month)
-    cur_purchases = state[merchant.id]['purchase_count'] if merchant.id in state else 0
+    cur_purchase_count = state[merchant.id]['purchase_count'] if merchant.id in state else 0
 
-    if cur_purchases < merchant.total_purchases:
-        remaining_purchases = merchant.total_purchases - cur_purchases
-        month_end = merchant.max_day if merchant.max_day else DAYS_IN_MONTH[now.month] - 1
-        remaining_secs_in_month = (datetime(now.year, now.month, month_end) - now).total_seconds()
-        average_gap = remaining_secs_in_month / remaining_purchases
+    if cur_purchase_count < merchant.total_purchases:
+        remaining_purchase_count = merchant.total_purchases - cur_purchase_count
+        month_end_day = merchant.max_day if merchant.max_day else DAYS_IN_MONTH[now.month] - 1
+        remaining_secs_in_month = (datetime(now.year, now.month, month_end_day) - now).total_seconds()
+        average_gap = remaining_secs_in_month / remaining_purchase_count
 
         time_variance = merchant.spread_time_variance
         while average_gap < time_variance * 2 and time_variance > 60:
@@ -233,8 +247,8 @@ def record_transaction(merchant_id, amount):
             'transactions': []
         }
 
-    cur_purchases = state[merchant_id]['purchase_count'] + 1
-    state[merchant_id]['purchase_count'] = cur_purchases
+    cur_purchase_count = state[merchant_id]['purchase_count'] + 1
+    state[merchant_id]['purchase_count'] = cur_purchase_count
     state[merchant_id]['transactions'].append({
         'amount': str(amount) + ' cents',
         'human_time': now.strftime("%Y-%m-%d %I:%M%p"),
@@ -246,7 +260,7 @@ def record_transaction(merchant_id, amount):
 
     STATE_WRITE_LOCK.release()
 
-    LOGGER.info(str(cur_purchases) + ' ' + merchant_id + ' ' + plural('purchase', cur_purchases) + ' complete for ' + now.strftime('%B %Y'))
+    LOGGER.info(str(cur_purchase_count) + ' ' + merchant_id + ' ' + plural('purchase', cur_purchase_count) + ' complete for ' + now.strftime('%B %Y'))
 
 
 def formatted_date_of_offset(now, start_offset):
