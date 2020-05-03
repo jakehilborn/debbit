@@ -100,7 +100,7 @@ Config.txt Example
 ##################
 
 mode: burst
-hide_web_browser: True
+hide_web_browser: yes
 
 card_1:
   amazon_gift_card_reload:
@@ -110,7 +110,7 @@ card_1:
     usr: you@domain.com
     psw: p@ssw0rd
     card: 1111222233334444
-    close_browser: False
+    close_browser: no
     burst_count: 2
   xfinity_bill_pay:
     total_purchases: 20
@@ -118,7 +118,7 @@ card_1:
     amount_max: 20
     usr: username
     psw: p@ssw0rd
-    close_browser: False
+    close_browser: no
     burst_count: 1
     card: 4444
 
@@ -130,7 +130,7 @@ card_2:
     usr: myotheraccount@domain.com
     psw: p@ssw0rd
     card: 5555666677778888
-    close_browser: False
+    close_browser: no
     burst_count: 2
   xfinity_bill_pay:
     total_purchases: 20
@@ -138,7 +138,7 @@ card_2:
     amount_max: 20
     usr: username
     psw: p@ssw0rd
-    close_browser: False
+    close_browser: no
     burst_count: 1
     card: 8888
     timing:

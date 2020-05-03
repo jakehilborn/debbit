@@ -4,7 +4,7 @@
 # Config.txt Merchant Info - important config restrictions some merchants have
 
 mode: burst
-hide_web_browser: False
+hide_web_browser: no
 
 any_card_description:
   example_merchant:
@@ -14,5 +14,5 @@ any_card_description:
     usr: user
     psw: pass
     card: 1234
-    close_browser: False
+    close_browser: no
     burst_count: 2
