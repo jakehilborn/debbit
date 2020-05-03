@@ -61,7 +61,7 @@ def load_merchant(card, merchant_name, merchant_conf):
     merchant = Merchant(card, merchant_name, web_automation, merchant_conf)
 
     if CONFIG['mode'] == 'spread':
-        start_schedule(merchant)
+        start_spread_schedule(merchant)
     if CONFIG['mode'] == 'burst':
         Thread(target=burst_loop, args=(merchant,)).start()
 
@@ -166,7 +166,7 @@ def log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cu
     LOGGER.info('Bursting next ' + str(next_burst_count) + ' ' + merchant.id + ' ' + plural('purchase', next_burst_count) + ' after ' + next_burst_time.strftime("%Y-%m-%d %I:%M%p"))
 
 
-def start_schedule(merchant):
+def start_spread_schedule(merchant):
     now = datetime.now()
     state = load_state(now.year, now.month)
 
@@ -180,10 +180,10 @@ def start_schedule(merchant):
     elif state[merchant.id]['purchase_count'] < merchant.total_purchases and now.timestamp() - state[merchant.id]['transactions'][-1]['unix_time'] > merchant.spread_min_gap:
         spread_recursion(merchant)
     else:
-        schedule_next(merchant)
+        schedule_next_spread(merchant)
 
 
-def schedule_next(merchant):
+def schedule_next_spread(merchant):
     now = datetime.now()
     state = load_state(now.year, now.month)
     cur_purchase_count = state[merchant.id]['purchase_count'] if merchant.id in state else 0
@@ -224,7 +224,7 @@ def schedule_next(merchant):
 
 def spread_recursion(merchant):
     web_automation_wrapper(merchant)
-    schedule_next(merchant)
+    schedule_next_spread(merchant)
 
 
 def record_transaction(merchant_id, amount):
