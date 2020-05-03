@@ -405,7 +405,7 @@ def plural(word, count):
 
 class Merchant:
     def __init__(self, card, name, web_automation, config_entry):
-        self.id = str(card) + ':' + name
+        self.id = str(card) + '_' + name
         self.name = name
         self.web_automation = web_automation
 
@@ -425,7 +425,7 @@ class Merchant:
         # Optional config default values.
         self.min_day = config_entry.get('timing', {}).get('min_day') or 2  # avoid off by one errors in all systems
         self.max_day = config_entry.get('timing', {}).get('max_day')  # calculated dynamically if None is returned
-        self.burst_min_gap = config_entry.get('timing', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned TODO add logic to calculate this
+        self.burst_min_gap = config_entry.get('timing', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
         self.burst_time_variance = config_entry.get('timing', {}).get('burst', {}).get('time_variance') or 14400  # 4 hours
         self.spread_min_gap = config_entry.get('timing', {}).get('spread', {}).get('min_gap') or 14400  # 4 hours
         self.spread_time_variance = config_entry.get('timing', {}).get('spread', {}).get('time_variance') or 14400  # 4 hours
