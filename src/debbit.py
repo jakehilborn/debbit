@@ -56,7 +56,7 @@ def load_merchant(card, merchant_name, merchant_conf):
     try:
         web_automation = __import__('merchants.' + merchant_name, fromlist=["*"]).web_automation
     except Exception as e:
-        sys.exit(1)  # TODO src/binary exceptions
+        sys.exit(1)  # TODO src/binary exceptions if file not found
 
     merchant = Merchant(card, merchant_name, web_automation, merchant_conf)
 
@@ -411,7 +411,7 @@ class Merchant:
         # Optional config default values.
         self.min_day = config_entry.get('timing', {}).get('min_day') or 2  # avoid off by one errors in all systems
         self.max_day = config_entry.get('timing', {}).get('max_day')  # calculated dynamically if None is returned
-        self.burst_min_gap = config_entry.get('timing', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
+        self.burst_min_gap = config_entry.get('timing', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned TODO add logic to calculate this
         self.burst_time_variance = config_entry.get('timing', {}).get('burst', {}).get('time_variance') or 14400  # 4 hours
         self.spread_min_gap = config_entry.get('timing', {}).get('spread', {}).get('min_gap') or 14400  # 4 hours
         self.spread_time_variance = config_entry.get('timing', {}).get('spread', {}).get('time_variance') or 14400  # 4 hours
@@ -462,7 +462,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     with open(to_open, 'r', encoding='utf-8') as config_f:
-        CONFIG = yaml.safe_load(config_f.read())  # TODO wrap with try catch?
+        CONFIG = yaml.safe_load(config_f.read())  # TODO wrap with try catch due to malformed yaml?
 
     main()
 
