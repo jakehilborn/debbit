@@ -15,3 +15,7 @@ __pycache__/
 build/
 dist/
 debbit.spec
+
+# GitHub Pages / Jekyll
+_site/
+.jekyll-cache/
