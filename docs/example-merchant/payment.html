@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="/assets/css/style.css">
+  </head>
+  <body>
+    <header class="page-header" role="banner">
+      <h1 class="project-name">debbit</h1>
+      <h2 class="project-tagline">example_merchant</h2>
+    </header>
+
+    <main id="content" class="main-content" role="main">
+
+      <h3><span class="some-class">Current Balance: $12.34</span></h3>
+
+      <br>
+
+      <h4>Payment Method:</h4>
+      <div>
+        <input type="radio" id="card1" name="drone" value="huey" checked>
+        <label for="card1">Fake card ending in 1111 (default)</label>
+      </div>
+
+      <div>
+        <input type="radio" id="card2" name="drone" value="dewey">
+        <label for="card2">Fake card ending in 2222</label>
+      </div>
+
+      <div>
+        <input type="radio" id="card3" name="drone" value="louie">
+        <label for="card3">Fake card ending in 3333</label>
+      </div>
+
+      <button type="button" onclick="login()">Submit Payment</button>
+      <script>
+      function login() {
+        document.getElementById("loading-spinner").style.visibility = "visible";
+        setTimeout(function() {
+          window.location.href="/example-merchant/confirmation.html"
+        } ,2000);
+      }
+      </script>
+
+      <div class="loader" id="loading-spinner"></div>
+
+      <footer class="site-footer">
+        <span class="site-footer-credits">Showcase for how debbit works</span>
+      </footer>
+    </main>
+  </body>
+</html>

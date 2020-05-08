@@ -14,7 +14,7 @@ LOGGER = logging.getLogger('debbit')
 '''
 How to add a new merchant module to debbit
 
-Create a new .py file in the merchants directory. Create a new block in config.txt such that the merchant name matches
+Create a new .py file in the merchants directory. Create a new block in config.yml such that the merchant name matches
 the name of your new file (excluding .py). The file must have a function with the signature
 `def web_automation(driver, merchant, amount):` that returns a `Result` in all possible scenarios. There is no
 Result.error enum since it is expected that your web automation will throw an exception in case something does cause
@@ -25,9 +25,9 @@ For more complex scenarios, please refer to the other merchant .py files.
 
 
 def web_automation(driver, merchant, amount):
-    driver.get('https://duckduckgo.com/')
+    driver.get('http://127.0.0.1:4000/example-merchant/login.html')
 
-    WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.ID, 'search_form_input_homepage')))
+    WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.ID, 'password')))
 
     try:  # check if hypothetical bill has already been paid by seeing if remaining balance is $0.00
         driver.find_element_by_xpath("//*[contains(text(),'$0.00'").click()
