@@ -58,20 +58,36 @@ Anti-automation captcha detected. Please follow these steps, future runs shouldn
         except TimeoutException:
             pass
 
+        try:  # OTP text message
+            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'phone number ending in')]")))
+            if driver.find_elements_by_id('auth-mfa-remember-device'):
+                driver.find_element_by_id('auth-mfa-remember-device').click()
+
+            sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'phone number ending in')]").text
+            LOGGER.info(sent_to_text)
+            LOGGER.info('Enter OTP here:')
+            otp = input()
+
+            driver.find_element_by_id('auth-mfa-otpcode').send_keys(otp)
+            driver.find_element_by_id('auth-signin-button').click()
+        except TimeoutException:
+            pass
+
         try:  # OTP email validation
             WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
-            otp_flow = True
+            otp_email = True
         except TimeoutException:
-            otp_flow = False
+            otp_email = False
 
         try:
             driver.find_element_by_xpath("//*[contains(text(),'one-time pass')]").click()
-            otp_flow = True
+            otp_email = True
         except common.exceptions.NoSuchElementException:
             pass
 
-        if otp_flow:
-            driver.find_element_by_id('continue').click()
+        if otp_email:
+            if driver.find_elements_by_id('continue'):
+                driver.find_element_by_id('continue').click()
 
             WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input")))
             sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
