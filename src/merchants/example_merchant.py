@@ -16,7 +16,7 @@ LOGGER = logging.getLogger('debbit')
 '''
 How to add a new merchant module to debbit
 
-Create a new .py file in the merchants directory. Create a new block in config.yml such that the merchant name matches
+Create a new .py file in the merchants directory. Create a new block in config.txt such that the merchant name matches
 the name of your new file (excluding .py). The file must have a function with the signature
 `def web_automation(driver, merchant, amount):` that returns a `Result` in all possible scenarios. There is no
 Result.error enum since it is expected that your web automation will throw an exception in case something does cause
