@@ -17,8 +17,6 @@
 
       <h3><span class="some-class">Current Balance: $12.34</span></h3>
 
-      <br>
-
       <h4>Payment Method:</h4>
       <div>
         <input type="radio" id="card1" name="drone" value="huey" checked>
@@ -35,7 +33,14 @@
         <label for="card3">Fake card ending in 3333</label>
       </div>
 
-      <button type="button" onclick="login()">Submit Payment</button>
+      <br>
+      <div>
+        <label for="amount">Amount:</label>
+        <input type="text" id="amount" name="amount">
+      </div>
+      <br>
+
+      <button type="button" id="submit-payment" onclick="login()">Submit Payment</button>
       <script>
         function login() {
           document.getElementById("loading-spinner").style.visibility = "visible";

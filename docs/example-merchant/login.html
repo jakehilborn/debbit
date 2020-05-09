@@ -21,10 +21,10 @@
 
       <div>
         <label for="password" id="password-label">Password:</label>
-        <input type="password" id="password" name="password" minlength="8" required>
+        <input type="password" id="password" name="password">
       </div>
 
-      <button type="button" onclick="login()">Sign in</button>
+      <button type="button" id="login" onclick="login(2000)">Sign in</button>
       <div class="loader" id="loading-spinner"></div>
 
       <div id="already-logged-in" style="visibility:hidden">
@@ -32,12 +32,12 @@
       </div>
 
       <script>
-        function login() {
+        function login(loadTime) {
           document.getElementById("loading-spinner").style.visibility = "visible";
           document.cookie ="logged_in=true; path=/"
           setTimeout(function() {
             window.location.href="/example-merchant/payment.html"
-          } ,3000);
+          } ,loadTime);
         }
 
         if (document.cookie.includes("logged_in=true")) {
@@ -46,7 +46,7 @@
           document.getElementById("password").remove();
           document.getElementById("username-label").innerHTML = "Username: already logged in"
           document.getElementById("password-label").innerHTML = "Password: already logged in"
-          login();
+          login(5000);
         }
       </script>
 
