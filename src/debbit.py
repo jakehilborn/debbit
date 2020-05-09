@@ -56,7 +56,8 @@ def load_merchant(card, merchant_name, merchant_conf):
     try:
         web_automation = __import__('merchants.' + merchant_name, fromlist=["*"]).web_automation
     except Exception as e:
-        sys.exit(1)  # TODO src/binary exceptions if file not found
+        LOGGER.error('Error loading ' + merchant_name + '.py from merchants folder')
+        raise e
 
     merchant = Merchant(card, merchant_name, web_automation, merchant_conf)
 

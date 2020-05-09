@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="/assets/css/style.css">
+  </head>
+  <body>
+    <header class="page-header" role="banner">
+      <h1 class="project-name">debbit</h1>
+      <h2 class="project-tagline">example_merchant</h2>
+    </header>
+
+    <main id="content" class="main-content" role="main">
+      <div>
+        <label for="username" id="username-label">Username:</label>
+        <input type="text" id="username" name="username">
+      </div>
+
+      <div>
+        <label for="password" id="password-label">Password:</label>
+        <input type="password" id="password" name="password">
+      </div>
+
+      <button type="button" id="login" onclick="login(2000)">Sign in</button>
+      <div class="loader" id="loading-spinner"></div>
+
+      <div id="already-logged-in" style="visibility:hidden">
+        <h3>Already logged in. This means config.txt has "close_browser: no" set.</h3>
+      </div>
+
+      <script>
+        function login(loadTime) {
+          document.getElementById("loading-spinner").style.visibility = "visible";
+          document.cookie ="logged_in=true; path=/"
+          setTimeout(function() {
+            window.location.href="/example-merchant/payment.html"
+          } ,loadTime);
+        }
+
+        if (document.cookie.includes("logged_in=true")) {
+          document.getElementById("already-logged-in").style.visibility = "visible";
+          document.getElementById("username").remove();
+          document.getElementById("password").remove();
+          document.getElementById("username-label").innerHTML = "Username: already logged in"
+          document.getElementById("password-label").innerHTML = "Password: already logged in"
+          login(5000);
+        }
+      </script>
+
+      <footer class="site-footer">
+        <span class="site-footer-credits">Showcase for how debbit works</span>
+      </footer>
+    </main>
+  </body>
+</html>
