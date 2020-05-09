@@ -27,7 +27,7 @@ For more complex scenarios, please refer to the other merchant .py files.
 
 
 def web_automation(driver, merchant, amount):
-    driver.get('http://127.0.0.1:4000/example-merchant/login.html')
+    driver.get('https://jakehilborn.github.io/debbit/example-merchant/login.html')
 
     logged_in = utils.is_logged_in(driver, timeout=90,
        logged_out_element=(By.ID, 'password'),
