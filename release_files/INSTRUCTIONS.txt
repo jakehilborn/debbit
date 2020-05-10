@@ -33,6 +33,9 @@ mode: burst
 # set to "yes" to run web automation invisibly in the background, aka headless mode.
 hide_web_browser: no
 
+# Optional. If debbit is unable to complete a purchase after 5 tries you'll be notified via email.
+notify_failure: your.email@website.com
+
 # You can put any name for the card here.
 card_1:
 
@@ -101,6 +104,7 @@ Config.txt Example
 
 mode: burst
 hide_web_browser: yes
+notify_failure: your.email@website.com
 
 card_1:
   amazon_gift_card_reload:

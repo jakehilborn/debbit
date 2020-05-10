@@ -5,6 +5,7 @@
 
 mode: burst
 hide_web_browser: no
+notify_failure: your.email@website.com
 
 any_card_description:
   example_merchant:

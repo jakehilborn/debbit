@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import base64
 import logging
 import os
 import random
@@ -13,6 +14,8 @@ import yaml  # PyYAML
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException
 from selenium.webdriver.firefox.options import Options
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 from result import Result
 
@@ -34,7 +37,7 @@ def main():
     LOGGER.info('')
 
     for card in CONFIG:
-        if card == 'mode' or card == 'hide_web_browser':  # global config stored at same level as cards, filter them out
+        if card in ['mode', 'hide_web_browser', 'notify_failure']:  # global config stored at same level as cards, filter them out
             continue
 
         for merchant_name, merchant_conf in CONFIG[card].items():
@@ -299,6 +302,7 @@ def web_automation_wrapper(merchant):
             else:
                 exit_msg = merchant.id + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
                 LOGGER.error(exit_msg)
+                notify_failure(exit_msg)
                 release_webdriver(merchant, True)
                 raise Exception(exit_msg)  # exits this merchant's thread, not entire program
 
@@ -308,7 +312,9 @@ def web_automation_wrapper(merchant):
             record_transaction(merchant.id, amount)
 
         if result == Result.unverified:
-            LOGGER.error('Unable to verify ' + merchant.id + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.')
+            exit_msg = 'Unable to verify ' + merchant.id + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
+            LOGGER.error(exit_msg)
+            notify_failure(exit_msg)
             release_webdriver(merchant, True)
             sys.exit(1)  # exits this merchant's thread, not entire program
 
@@ -342,11 +348,46 @@ def scrub_sensitive_data(data, merchant):
     if not data:
         return data
 
-    return data\
-        .replace(merchant.usr, '***usr***')\
-        .replace(merchant.psw, '***psw***')\
-        .replace(merchant.card, '***card***')\
+    return data \
+        .replace(merchant.usr, '***usr***') \
+        .replace(merchant.psw, '***psw***') \
+        .replace(merchant.card, '***card***') \
         .replace(merchant.card[-4:], '***card***')  # last 4 digits of card
+
+
+def notify_failure(exit_msg):
+    if not CONFIG.get('notify_failure') or CONFIG['notify_failure'] == 'your.email@website.com':
+        return
+
+    html_content = ('{exit_msg}'
+        '<br><br>'
+        '<strong>This debbit failure was only sent to you.</strong> To help get this issue fixed, please consider '
+        'sharing this error with the debbit developers. In the failures folder there are files with timestamps for '
+        'names. Each timestamp has 3 files ending in .txt, .png, and .html. Open the .png file and make sure it does '
+        'not have your credit card number or password showing. Then, email these three files (or the whole failure '
+        'folder) to jakehilborn@gmail.com or open an "Issue" at https://github.com/jakehilborn/debbit and attach '
+        'them there.').format(exit_msg=exit_msg)
+
+    d = [b'U0cueDBSVmZZeVFRRHVHRHpY',
+         b'WkRsQk4xaGtaeTVYZEhOcFdsWnpRM1ZS',
+         b'WWpKa2Qxb3dUbFpQVjJSU1ltdEdOV0pyVGpKa01VMHlaVzVHV2xOR1ZrdGlNbmN4WkVabk0xSXhVa1k9']
+    o = ''
+    for i in range(len(d)):
+        s = d[i]
+        for j in range(i + 1):
+            s = base64.b64decode(s)
+        o += s.decode('utf-8')
+
+    message = Mail(
+        from_email='debbit.failure@debbit.com',
+        to_emails=CONFIG['notify_failure'],
+        subject='Debbit Failure',
+        html_content=html_content)
+    try:
+        SendGridAPIClient(o).send(message)
+    except Exception as e:
+        LOGGER.error('Unable to send failure notification email')
+        LOGGER.error(e.message)
 
 
 def get_webdriver(merchant):
@@ -477,10 +518,10 @@ if __name__ == '__main__':
     with open(absolute_path(config_to_open), 'r', encoding='utf-8') as config_f:
         try:
             CONFIG = yaml.safe_load(config_f.read())
-        except yaml.YAMLError as e:
+        except yaml.YAMLError as yaml_e:
             error_msg = '\n\nFormatting error in ' + config_to_open + '. Ensure ' + config_to_open + ' has the same structure and spacing as the examples in INSTRUCTIONS.txt.'
-            if hasattr(e, 'problem_mark'):
-                error_msg += '\n\n' + str(e.problem_mark)
+            if hasattr(yaml_e, 'problem_mark'):
+                error_msg += '\n\n' + str(yaml_e.problem_mark)
             LOGGER.error(error_msg)
             sys.exit(1)
 
