@@ -5,6 +5,7 @@ import random
 import time
 import traceback
 import sys
+import urllib
 from datetime import datetime
 from datetime import timedelta
 from enum import Enum
@@ -12,7 +13,8 @@ from threading import Timer, Lock, Thread
 
 import yaml  # PyYAML
 from selenium import webdriver, common
-from selenium.common.exceptions import TimeoutException, SessionNotCreatedException, ElementClickInterceptedException
+from selenium.common.exceptions import TimeoutException, SessionNotCreatedException, ElementClickInterceptedException, \
+    WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
@@ -21,6 +23,8 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 
 def main():
+    update_check()
+
     if config['mode'] != 'burst' and config['mode'] != 'spread':
         logging.error('Set config.txt "mode" to burst or spread')
         return
@@ -272,45 +276,87 @@ def amazon_gift_card_reload(driver, merchant, amount):
     driver.find_element_by_id('ap_password').send_keys(merchant.psw)
     driver.find_element_by_id('signInSubmit').click()
 
-    try:  # OTP email validation
-        WebDriverWait(driver, 3).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
-        otp_flow = True
-    except TimeoutException:
-        otp_flow = False
+    handle_amazon_anti_automation_challenge(driver, merchant)
 
-    try:
-        driver.find_element_by_xpath("//*[contains(text(),'one-time pass')]").click()
-        otp_flow = True
-    except common.exceptions.NoSuchElementException:
-        pass
+    try:  # OTP text message
+        WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable(
+            (By.XPATH, "//*[contains(text(),'phone number ending in')]")))
+        if driver.find_elements_by_id('auth-mfa-remember-device'):
+            driver.find_element_by_id('auth-mfa-remember-device').click()
 
-    if otp_flow:
-        driver.find_element_by_id('continue').click()
-
-        WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input")))
-        sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
+        sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'phone number ending in')]").text
         logging.info(sent_to_text)
         logging.info('Enter OTP here:')
         otp = input()
 
-        elem = driver.find_element_by_xpath("//input")
-        elem.send_keys(otp)
-        elem.send_keys(Keys.TAB)
-        elem.send_keys(Keys.ENTER)
+        driver.find_element_by_id('auth-mfa-otpcode').send_keys(otp)
+        driver.find_element_by_id('auth-signin-button').click()
+    except TimeoutException:
+        pass
+
+    try:  # OTP email validation
+        WebDriverWait(driver, 5).until(
+            expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Pass')]")))
+        otp_email = True
+    except TimeoutException:
+        otp_email = False
+
+    try:
+        driver.find_element_by_xpath("//*[contains(text(),'one-time pass')]").click()
+        otp_email = True
+    except common.exceptions.NoSuchElementException:
+        pass
+
+    if otp_email:
+        if driver.find_elements_by_id('continue'):
+            driver.find_element_by_id('continue').click()
+
+        handle_amazon_anti_automation_challenge(driver, merchant)
+
+        try:  # User may have manually advanced to gift card screen or stopped at OTP input. Handle OTP input if on OTP screen.
+            WebDriverWait(driver, 5).until(
+                expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Enter OTP')]")))
+            sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
+            logging.info(sent_to_text)
+            logging.info('Enter OTP here:')
+            otp = input()
+
+            elem = driver.find_element_by_xpath("//input")
+            elem.send_keys(otp)
+            elem.send_keys(Keys.TAB)
+            elem.send_keys(Keys.ENTER)
+        except TimeoutException:
+            pass
+
+    try:
+        WebDriverWait(driver, 5).until(
+            expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Not now')]")))
+        driver.find_element_by_xpath("//*[contains(text(),'Not now')]").click()
+    except TimeoutException:  # add mobile number page
+        pass
 
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
     driver.find_element_by_id('asv-manual-reload-amount').send_keys(cents_to_str(amount))
-    driver.find_element_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]").click()
+
+    for element in driver.find_elements_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]"):
+        try:  # Amazon has redundant non-clickable elements. This will try each one until one works.
+            element.click()
+            break
+        except WebDriverException:
+            pass
+
     driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
 
     time.sleep(10)  # give page a chance to load
     if 'thank-you' not in driver.current_url:
-        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + merchant.card[-4:] + "']")))
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable(
+            (By.XPATH, "//input[@placeholder='ending in " + merchant.card[-4:] + "']")))
         elem = driver.find_element_by_xpath("//input[@placeholder='ending in " + merchant.card[-4:] + "']")
         elem.send_keys(merchant.card)
         elem.send_keys(Keys.TAB)
         elem.send_keys(Keys.ENTER)
-        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable(
+            (By.XPATH, "//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]")))
         time.sleep(1)
         driver.find_element_by_xpath("//button[contains(text(),'Reload $" + cents_to_str(amount) + "')]").click()
         time.sleep(10)  # give page a chance to load
@@ -319,6 +365,26 @@ def amazon_gift_card_reload(driver, merchant, amount):
         return Result.unverified
 
     return Result.success
+
+
+def handle_amazon_anti_automation_challenge(driver, merchant):
+    try:
+        WebDriverWait(driver, 5).until(
+            expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'nter the characters')]")))
+
+        if driver.find_elements_by_id('ap_password'):
+            driver.find_element_by_id('ap_password').send_keys(merchant.psw)
+
+        logging.info('amazon captcha detected')
+        input('''
+Anti-automation captcha detected. Please follow these steps, future runs shouldn't need captcha input if you set "close_browser: no" in config.txt.
+1. Open the Firefox window that debbit created.
+2. Input the captcha / other anti-automation challenges.
+3. You should now be on the gift card reload page
+4. Click on this terminal window and hit "Enter" to continue running debbit.
+''')
+    except TimeoutException:
+        pass
 
 
 def xfinity_bill_pay(driver, merchant, amount):
@@ -498,6 +564,33 @@ def plural(word, count):
     return word + 's'
 
 
+def update_check():
+    try:
+        latest_version = int(urllib.request.urlopen('https://jakehilborn.github.io/debbit/updates/latest.txt').read())
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
+        logging.error('Unable to check for updates. Check https://github.com/jakehilborn/debbit/releases if interested.')
+        return
+
+    if VERSION_INT >= latest_version:
+        return
+
+    changelog = '\n\nDebbit update available! Download latest release here: https://github.com/jakehilborn/debbit/releases\n'
+
+    try:
+        for i in range(VERSION_INT, latest_version):
+            changelog += '\n' + urllib.request.urlopen('https://jakehilborn.github.io/debbit/updates/changelogs/' + str(i + 1) + '.txt').read().decode('utf-8')
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
+        pass
+
+    logging.info(changelog)
+
+    return
+
+
 class Result(Enum):
     success = 'success',
     skipped = 'skipped',
@@ -525,6 +618,7 @@ class Merchant:
 
 
 version = 'v1.0'
+VERSION_INT = 2
 
 if __name__ == '__main__':
     # configure loggers
