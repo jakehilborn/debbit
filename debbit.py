@@ -5,7 +5,7 @@ import random
 import time
 import traceback
 import sys
-import urllib
+import urllib.request
 from datetime import datetime
 from datetime import timedelta
 from enum import Enum
@@ -617,7 +617,7 @@ class Merchant:
         self.card = str(config_entry['card'])
 
 
-version = 'v1.0'
+version = 'v1.0.1'
 VERSION_INT = 2
 
 if __name__ == '__main__':
