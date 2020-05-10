@@ -6,6 +6,7 @@ import random
 import sys
 import time
 import traceback
+import urllib.request
 from datetime import datetime
 from datetime import timedelta
 from threading import Timer, Lock, Thread
@@ -21,6 +22,8 @@ from result import Result
 
 
 def main():
+    update_check()
+
     if CONFIG['mode'] != 'burst' and CONFIG['mode'] != 'spread':
         LOGGER.error('Set config.txt "mode" to burst or spread')
         return
@@ -446,6 +449,33 @@ def plural(word, count):
     return word + 's'
 
 
+def update_check():
+    try:
+        latest_version = int(urllib.request.urlopen('https://jakehilborn.github.io/debbit/updates/latest.txt').read())
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
+        LOGGER.error('Unable to check for updates. Check https://github.com/jakehilborn/debbit/releases if interested.')
+        return
+
+    if VERSION_INT >= latest_version:
+        return
+
+    changelog = '\n\nDebbit update available! Download latest release here: https://github.com/jakehilborn/debbit/releases\n'
+
+    try:
+        for i in range(VERSION_INT, latest_version):
+            changelog += '\n' + urllib.request.urlopen('https://jakehilborn.github.io/debbit/updates/changelogs/' + str(i + 1) + '.txt').read().decode('utf-8')
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
+        pass
+
+    LOGGER.info(changelog)
+
+    return
+
+
 class Merchant:
     def __init__(self, card, name, web_automation, config_entry):
         self.id = str(card) + '_' + name
@@ -492,6 +522,7 @@ if __name__ == '__main__':
     WEB_DRIVER_LOCK = Lock()
     DAYS_IN_MONTH = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
     VERSION = 'v1.0.1-dev'
+    VERSION_INT = 1
 
     # configure cross thread global vars
     driver_store = {}
