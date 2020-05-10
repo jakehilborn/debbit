@@ -2,7 +2,7 @@ import logging
 import time
 
 from selenium import common
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions
@@ -40,23 +40,7 @@ def web_automation(driver, merchant, amount):
         driver.find_element_by_id('ap_password').send_keys(merchant.psw)
         driver.find_element_by_id('signInSubmit').click()
 
-        try:  # Anti-automation challenge
-            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'nter the characters')]")))
-
-            if driver.find_elements_by_id('ap_password'):
-                driver.find_element_by_id('ap_password').send_keys(merchant.psw)
-
-            LOGGER.info('amazon captcha detected')
-            input('''
-Anti-automation captcha detected. Please follow these steps, future runs shouldn't need captcha input if you set "close_browser: no" in config.txt.
-
-1. Open the Firefox window that debbit created.
-2. Input the captcha / other anti-automation challenges.
-3. You should now be on the gift card reload page
-4. Click on this terminal window and hit "Enter" to continue running debbit.
-''')
-        except TimeoutException:
-            pass
+        handle_anti_automation_challenge(driver, merchant)
 
         try:  # OTP text message
             WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'phone number ending in')]")))
@@ -74,7 +58,7 @@ Anti-automation captcha detected. Please follow these steps, future runs shouldn
             pass
 
         try:  # OTP email validation
-            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Password')]")))
+            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'One Time Pass')]")))
             otp_email = True
         except TimeoutException:
             otp_email = False
@@ -89,16 +73,21 @@ Anti-automation captcha detected. Please follow these steps, future runs shouldn
             if driver.find_elements_by_id('continue'):
                 driver.find_element_by_id('continue').click()
 
-            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input")))
-            sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
-            LOGGER.info(sent_to_text)
-            LOGGER.info('Enter OTP here:')
-            otp = input()
+            handle_anti_automation_challenge(driver, merchant)
 
-            elem = driver.find_element_by_xpath("//input")
-            elem.send_keys(otp)
-            elem.send_keys(Keys.TAB)
-            elem.send_keys(Keys.ENTER)
+            try:  # User may have manually advanced to gift card screen or stopped at OTP input. Handle OTP input if on OTP screen.
+                WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Enter OTP')]")))
+                sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'@')]").text
+                LOGGER.info(sent_to_text)
+                LOGGER.info('Enter OTP here:')
+                otp = input()
+
+                elem = driver.find_element_by_xpath("//input")
+                elem.send_keys(otp)
+                elem.send_keys(Keys.TAB)
+                elem.send_keys(Keys.ENTER)
+            except TimeoutException:
+                pass
 
         try:
             WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Not now')]")))
@@ -108,7 +97,14 @@ Anti-automation captcha detected. Please follow these steps, future runs shouldn
 
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
     driver.find_element_by_id('asv-manual-reload-amount').send_keys(utils.cents_to_str(amount))
-    driver.find_element_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]").click()
+
+    for element in driver.find_elements_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]"):
+        try:  # Amazon has redundant non-clickable elements. This will try each one until one works.
+            element.click()
+            break
+        except WebDriverException:
+            pass
+
     driver.find_element_by_xpath("//button[contains(text(),'Reload $" + utils.cents_to_str(amount) + "')]").click()
 
     time.sleep(10)  # give page a chance to load
@@ -127,3 +123,23 @@ Anti-automation captcha detected. Please follow these steps, future runs shouldn
         return Result.unverified
 
     return Result.success
+
+
+def handle_anti_automation_challenge(driver, merchant):
+    try:
+        WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'nter the characters')]")))
+
+        if driver.find_elements_by_id('ap_password'):
+            driver.find_element_by_id('ap_password').send_keys(merchant.psw)
+
+        LOGGER.info('amazon captcha detected')
+        input('''
+Anti-automation captcha detected. Please follow these steps, future runs shouldn't need captcha input if you set "close_browser: no" in config.txt.
+
+1. Open the Firefox window that debbit created.
+2. Input the captcha / other anti-automation challenges.
+3. You should now be on the gift card reload page
+4. Click on this terminal window and hit "Enter" to continue running debbit.
+''')
+    except TimeoutException:
+        pass
