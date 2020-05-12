@@ -21,8 +21,5 @@ If you want to develop debbit or use on Linux follow instructions below.
     # install dependencies listed in Pipfile
     pipenv install
 
-    # activate pipshell
-    pipenv shell
-
-    # run debbit
-    python debbit.py
+    # run debbit via pipenv
+    pipenv run ./debbit.py
