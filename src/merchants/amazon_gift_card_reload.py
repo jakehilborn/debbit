@@ -29,14 +29,13 @@ def web_automation(driver, merchant, amount):
             time.sleep(3)
             driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
 
-        driver.find_element_by_id('ap_email').send_keys(merchant.usr)
+        if driver.find_elements_by_id('ap_email'):  # if first run, fill in email. If subsequent run, nothing to fill in
+            driver.find_element_by_id('ap_email').send_keys(merchant.usr)
 
-        try:  # a/b tested new UI flow
-            driver.find_element_by_id('continue').click()  # if not exists, exception is raised
-        except common.exceptions.NoSuchElementException:  # a/b tested old UI flow
-            pass
+        if driver.find_elements_by_id('continue'):  # a/b tested new UI flow
+            driver.find_element_by_id('continue').click()
+            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.ID, 'ap_password')))
 
-        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'ap_password')))
         driver.find_element_by_id('ap_password').send_keys(merchant.psw)
         driver.find_element_by_id('signInSubmit').click()
 
