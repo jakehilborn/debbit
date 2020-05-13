@@ -22,4 +22,4 @@ If you want to develop debbit or use on Linux follow instructions below.
     pipenv install
 
     # run debbit via pipenv
-    pipenv run ./debbit.py
+    pipenv run python debbit.py
