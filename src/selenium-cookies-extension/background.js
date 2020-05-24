@@ -6,7 +6,7 @@ function onRestoreCookiesPage(tabId, changeInfo, tabInfo) {
 
 function wait_until_ready(function_when_ready) {
   browser.tabs.executeScript({
-    code: `document.getElementById('status').textContent;`
+    code: "document.getElementById('status').textContent;"
   }).then((retval) => {
     if (retval === undefined || retval[0] !== 'dom-ready') {
       setTimeout(() => {
@@ -19,14 +19,12 @@ function wait_until_ready(function_when_ready) {
 }
 
 function restoreCookies() {
-  console.log('restoring cookies');
   browser.tabs.executeScript({
-    code: `document.getElementById('content').textContent;`
+    code: "document.getElementById('content').textContent;"
   }).then((retval) => {
-    cookies = JSON.parse(retval)
+    cookies = JSON.parse(atob(retval))
     for (let c of cookies) {
       filtered_cookie = {
-        domain: c.domain,
         expirationDate: c.expirationDate,
         firstPartyDomain: c.firstPartyDomain,
         httpOnly: c.httpOnly,
@@ -35,14 +33,14 @@ function restoreCookies() {
         sameSite: c.sameSite,
         secure: c.secure,
         storeId: c.storeId,
-        url: 'https://' + c.domain + c.path,
+        url: 'https://' + c.domain,
         value: c.value
       };
 
       browser.cookies.set(filtered_cookie)
     }
     browser.tabs.executeScript({
-      code: `document.getElementById('status').textContent = 'done'`
+      code: "document.getElementById('status').textContent = 'done'"
     })
   });
 }
@@ -56,10 +54,10 @@ function onPersistCookiesPage(tabId, changeInfo, tabInfo) {
 function persistCookies() {
   browser.cookies.getAll({}).then((cookies) => {
     browser.tabs.executeScript({
-      code: `document.getElementById('content').textContent = ` + JSON.stringify(JSON.stringify(cookies))
+      code: "document.getElementById('content').textContent = '" + btoa(JSON.stringify(cookies)) + "'"
     }).then(() => {
       browser.tabs.executeScript({
-        code: `document.getElementById('status').textContent = 'dom-ready'`
+        code: "document.getElementById('status').textContent = 'dom-ready'"
       })
     });
   });
@@ -67,3 +65,4 @@ function persistCookies() {
 
 browser.tabs.onUpdated.addListener(onRestoreCookiesPage, {urls: ['file:///*restore-cookies.html']})
 browser.tabs.onUpdated.addListener(onPersistCookiesPage, {urls: ['file:///*persist-cookies.html']})
+browser.browserAction.onClicked.addListener(restoreCookies);
