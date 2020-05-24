@@ -56,7 +56,7 @@ function onPersistCookiesPage(tabId, changeInfo, tabInfo) {
 function persistCookies() {
   browser.cookies.getAll({}).then((cookies) => {
     browser.tabs.executeScript({
-      code: `document.getElementById('content').textContent = ` + "'" + JSON.stringify(cookies) + "'"
+      code: `document.getElementById('content').textContent = ` + JSON.stringify(JSON.stringify(cookies))
     }).then(() => {
       browser.tabs.executeScript({
         code: `document.getElementById('status').textContent = 'dom-ready'`
