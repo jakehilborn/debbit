@@ -41,6 +41,8 @@
     "downloads",
     "nativeMessaging",
     "https://jakehilborn.github.io/debbit/*",
+    "file:///*restore-cookies.html",
+    "file:///*persist-cookies.html",
     "<all_urls>"
   ]
 }
