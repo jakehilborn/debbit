@@ -6,9 +6,9 @@ function onRestoreCookiesPage(tabId, changeInfo, tabInfo) {
 
 function wait_until_ready(function_when_ready) {
   browser.tabs.executeScript({
-    code: `document.getElementById('ready').textContent;`
+    code: `document.getElementById('status').textContent;`
   }).then((retval) => {
-    if (retval === undefined || retval[0] === 'false') {
+    if (retval === undefined || retval[0] !== 'dom-ready') {
       setTimeout(() => {
         wait_until_ready(function_when_ready)
       }, 100);
@@ -23,7 +23,27 @@ function restoreCookies() {
   browser.tabs.executeScript({
     code: `document.getElementById('content').textContent;`
   }).then((retval) => {
-    browser.cookies.set({url: 'https://jakehilborn.github.io/debbit/', name: 'retval', value: retval[0]})
+    cookies = JSON.parse(retval)
+    for (let c of cookies) {
+      filtered_cookie = {
+        domain: c.domain,
+        expirationDate: c.expirationDate,
+        firstPartyDomain: c.firstPartyDomain,
+        httpOnly: c.httpOnly,
+        name: c.name,
+        path: c.path,
+        sameSite: c.sameSite,
+        secure: c.secure,
+        storeId: c.storeId,
+        url: 'https://' + c.domain + c.path,
+        value: c.value
+      };
+
+      browser.cookies.set(filtered_cookie)
+    }
+    browser.tabs.executeScript({
+      code: `document.getElementById('status').textContent = 'done'`
+    })
   });
 }
 
@@ -39,7 +59,7 @@ function persistCookies() {
       code: `document.getElementById('content').textContent = ` + "'" + JSON.stringify(cookies) + "'"
     }).then(() => {
       browser.tabs.executeScript({
-        code: `document.getElementById('ready').textContent = 'true'`
+        code: `document.getElementById('status').textContent = 'dom-ready'`
       })
     });
   });
