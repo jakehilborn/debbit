@@ -414,7 +414,7 @@ def get_webdriver(merchant):
         driver_store[merchant.id]['driver'].set_window_rect(**driver_store[merchant.id]['window'])
 
     driver = driver_store[merchant.id]['driver']
-    restore_cookies(driver)  # TODO try/catch
+    restore_cookies(driver, merchant.id)  # TODO try/catch
     return driver
 
 
@@ -422,7 +422,7 @@ def release_webdriver(merchant, force_release):
     if merchant.close_browser or force_release:
         try:
             driver = driver_store[merchant.id]['driver']
-            persist_cookies(driver)  # TODO try/catch
+            persist_cookies(driver, merchant.id)  # TODO try/catch
             del driver_store[merchant.id]
             driver.close()
         except (KeyboardInterrupt, SystemExit):
@@ -441,11 +441,11 @@ def release_webdriver(merchant, force_release):
         pass
 
 
-def restore_cookies(driver):
-    if not os.path.exists(absolute_path('cookies.txt')):
+def restore_cookies(driver, merchant_id):
+    if not os.path.exists(absolute_path('program-files', 'cookies', merchant_id)):
         return
 
-    with open(absolute_path('cookies.txt'), 'r', encoding='utf-8') as f:
+    with open(absolute_path('program-files', 'cookies', merchant_id), 'r', encoding='utf-8') as f:
         cookies = f.read()
 
     driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'restore-cookies.html'))
@@ -456,7 +456,7 @@ def restore_cookies(driver):
         time.sleep(0.1)
 
 
-def persist_cookies(driver):
+def persist_cookies(driver, merchant_id):  # TODO if this throws exception then log it somewhere
     driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'persist-cookies.html'))
 
     while driver.find_element_by_id('status').text != 'dom-ready':
@@ -464,7 +464,10 @@ def persist_cookies(driver):
 
     cookies = driver.find_element_by_id('content').text
 
-    with open(absolute_path('cookies.txt'), 'w', encoding='utf-8') as f:
+    if not os.path.exists(absolute_path('program-files', 'cookies')):
+        os.mkdir(absolute_path('program-files', 'cookies'))
+
+    with open(absolute_path('program-files', 'cookies', merchant_id), 'w', encoding='utf-8') as f:
         f.write(cookies)
 
 
