@@ -109,7 +109,7 @@ def burst_loop(merchant):
 
             result = web_automation_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
             cur_purchase_count += 1
-            for _ in range(this_burst_count - 1):
+            for i in range(this_burst_count - 1):
                 if result != Result.success:
                     break
                 sleep_time = 30
@@ -407,7 +407,7 @@ def get_webdriver(merchant):
         sys.exit(1)
 
     if merchant.use_cookies:
-        restore_cookies(driver, merchant.id)  # TODO try/catch
+        restore_cookies(driver, merchant.id)
 
     return driver
 
@@ -418,8 +418,8 @@ def close_webdriver(driver, merchant):
             persist_cookies(driver, merchant.id)
     except (KeyboardInterrupt, SystemExit):
         raise
-    except Exception:
-        pass  # TODO log cookie errors
+    except Exception as e:
+        LOGGER.error(str(e) + ' - proceeding without persisting cookies')
 
     try:
         driver.close()
@@ -437,24 +437,39 @@ def close_webdriver(driver, merchant):
 
 
 def restore_cookies(driver, merchant_id):
-    if not os.path.exists(absolute_path('program-files', 'cookies', merchant_id)):
-        return
+    try:
+        if not os.path.exists(absolute_path('program-files', 'cookies', merchant_id)):
+            return
 
-    with open(absolute_path('program-files', 'cookies', merchant_id), 'r', encoding='utf-8') as f:
-        cookies = f.read()
+        with open(absolute_path('program-files', 'cookies', merchant_id), 'r', encoding='utf-8') as f:
+            cookies = f.read()
 
-    driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'restore-cookies.html'))
-    driver.execute_script("document.getElementById('content').textContent = '" + cookies + "'")
-    driver.execute_script("document.getElementById('status').textContent = 'dom-ready'")
+        driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'restore-cookies.html'))
+        driver.execute_script("document.getElementById('content').textContent = '" + cookies + "'")
+        driver.execute_script("document.getElementById('status').textContent = 'dom-ready'")
 
-    while driver.find_element_by_id('status').text != 'done':
-        time.sleep(0.1)
+        seconds = 30
+        for i in range(seconds * 10):
+            if driver.find_element_by_id('status').text == 'done':
+                return
+            time.sleep(0.1)
+        error_msg = 'Unable to restore cookies after ' + str(seconds) + ' seconds'
+    except Exception as e:
+        error_msg = str(e)
+
+    LOGGER.error(error_msg + ' - proceeding without restoring cookies')
 
 
 def persist_cookies(driver, merchant_id):
     driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'persist-cookies.html'))
 
-    while driver.find_element_by_id('status').text != 'dom-ready':
+    seconds = 30
+    for i in range(seconds * 10):
+        if driver.find_element_by_id('status').text == 'dom-ready':
+            break
+        if i == seconds * 10 - 1:
+            LOGGER.error('Unable to restore cookies after ' + str(seconds) + ' seconds - proceeding without restoring cookies')
+            return
         time.sleep(0.1)
 
     cookies = driver.find_element_by_id('content').text
@@ -575,10 +590,10 @@ if __name__ == '__main__':
         try:
             CONFIG = yaml.safe_load(config_f.read())
         except yaml.YAMLError as yaml_e:
-            error_msg = '\n\nFormatting error in ' + config_to_open + '. Ensure ' + config_to_open + ' has the same structure and spacing as the examples in INSTRUCTIONS.txt.'
+            config_error_msg = '\n\nFormatting error in ' + config_to_open + '. Ensure ' + config_to_open + ' has the same structure and spacing as the examples in INSTRUCTIONS.txt.'
             if hasattr(yaml_e, 'problem_mark'):
-                error_msg += '\n\n' + str(yaml_e.problem_mark)
-            LOGGER.error(error_msg)
+                config_error_msg += '\n\n' + str(yaml_e.problem_mark)
+            LOGGER.error(config_error_msg)
             sys.exit(1)
 
     main()
