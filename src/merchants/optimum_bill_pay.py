@@ -1,7 +1,7 @@
 import logging
 
 from selenium import common
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
@@ -18,12 +18,16 @@ def web_automation(driver, merchant, amount):
     driver.get('https://www.optimum.net/pay-bill/payment-options/')
 
     logged_in = utils.is_logged_in(driver, timeout=90,
-        logged_out_element=(By.ID, 'loginPageUsername'),
+        logged_out_element=(By.ID, 'loginPagePassword'),
         logged_in_element=(By.ID, 'otherAmountInput')
     )
 
     if not logged_in:
-        driver.find_element_by_id('loginPageUsername').send_keys(merchant.usr)
+        try:  # if first run, fill in username. If subsequent run, username may already be filled in.
+            driver.find_element_by_id('loginPageUsername').send_keys(merchant.usr)
+        except ElementNotInteractableException:
+            pass
+
         driver.find_element_by_id('loginPagePassword').send_keys(merchant.psw)
         driver.find_element_by_xpath("//button[contains(text(),'Sign in to Optimum.net')]").click()
         WebDriverWait(driver, 90).until(expected_conditions.element_to_be_clickable((By.ID, 'otherAmountInput')))

@@ -1,6 +1,6 @@
 import logging
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
@@ -15,12 +15,16 @@ def web_automation(driver, merchant, amount):
     driver.get('http://payments.xfinity.com/')
 
     logged_in = utils.is_logged_in(driver, timeout=90,
-        logged_out_element=(By.ID, 'user'),
+        logged_out_element=(By.ID, 'passwd'),
         logged_in_element=(By.ID, 'customAmount')
     )
 
     if not logged_in:
-        driver.find_element_by_id('user').send_keys(merchant.usr)
+        try:  # if first run, fill in username. If subsequent run, username already exists and filling in throws exception
+            driver.find_element_by_id('user').send_keys(merchant.usr)
+        except ElementNotInteractableException:
+            pass
+
         driver.find_element_by_id('passwd').send_keys(merchant.psw)
         driver.find_element_by_id('sign_in').click()
 

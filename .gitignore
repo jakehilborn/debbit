@@ -3,6 +3,7 @@ config.yml
 debbit_log.log
 state/
 failures/
+cookies/
 
 geckodriver*
 

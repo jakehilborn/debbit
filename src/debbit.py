@@ -109,7 +109,7 @@ def burst_loop(merchant):
 
             result = web_automation_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
             cur_purchase_count += 1
-            for _ in range(this_burst_count - 1):
+            for i in range(this_burst_count - 1):
                 if result != Result.success:
                     break
                 sleep_time = 30
@@ -296,7 +296,7 @@ def web_automation_wrapper(merchant):
             failures += 1
 
             record_failure(driver, merchant, error_msg)
-            release_webdriver(merchant, False)
+            close_webdriver(driver, merchant)
 
             if failures < threshold:
                 LOGGER.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.id + ' attempts done, trying again in ' + str(60 * failures ** 4) + ' seconds')
@@ -306,10 +306,9 @@ def web_automation_wrapper(merchant):
                 exit_msg = merchant.id + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
                 LOGGER.error(exit_msg)
                 notify_failure(exit_msg)
-                release_webdriver(merchant, True)
                 raise Exception(exit_msg)  # exits this merchant's thread, not entire program
 
-        release_webdriver(merchant, False)
+        close_webdriver(driver, merchant)
 
         if result == Result.success:
             record_transaction(merchant.id, amount)
@@ -318,7 +317,6 @@ def web_automation_wrapper(merchant):
             exit_msg = 'Unable to verify ' + merchant.id + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
             LOGGER.error(exit_msg)
             notify_failure(exit_msg)
-            release_webdriver(merchant, True)
             sys.exit(1)  # exits this merchant's thread, not entire program
 
         return result
@@ -336,7 +334,7 @@ def record_failure(driver, merchant, error_msg):
     try:
         driver.save_screenshot(filename + '.png')
 
-        dom = driver.execute_script('return document.documentElement.outerHTML')
+        dom = driver.execute_script("return document.documentElement.outerHTML")
         dom = scrub_sensitive_data(dom, merchant)
 
         with open(filename + '.html', 'w', encoding='utf-8') as f:
@@ -395,40 +393,40 @@ def notify_failure(exit_msg):
 
 def get_webdriver(merchant):
     WEB_DRIVER_LOCK.acquire()  # Only execute one purchase at a time so the console log messages don't inter mix
+    options = Options()
+    options.headless = CONFIG['hide_web_browser']
+    try:
+        driver = webdriver.Firefox(options=options,
+                                 service_log_path=os.devnull,
+                                 executable_path=absolute_path('geckodriver'),
+                                 firefox_profile=absolute_path('program-files', 'firefox-profile'))
+    except SessionNotCreatedException:
+        LOGGER.error('')
+        LOGGER.error('Firefox not found. Please install the latest version of Firefox and try again.')
+        WEB_DRIVER_LOCK.release()
+        sys.exit(1)
 
-    if merchant.id not in driver_store:
-        options = Options()
-        options.headless = CONFIG['hide_web_browser']
-        try:
-            driver_store[merchant.id] = {
-                'driver': webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'), service_log_path=os.devnull),
-                'window': None
-            }
-        except SessionNotCreatedException:
-            LOGGER.error('')
-            LOGGER.error('Firefox not found. Please install the latest version of Firefox and try again.')
-            WEB_DRIVER_LOCK.release()
-            sys.exit(1)
+    if merchant.use_cookies:
+        restore_cookies(driver, merchant.id)
 
-    if driver_store[merchant.id]['window']:  # if browser window minimized, restore to previous position/size
-        driver_store[merchant.id]['driver'].set_window_rect(**driver_store[merchant.id]['window'])
-
-    return driver_store[merchant.id]['driver']
+    return driver
 
 
-def release_webdriver(merchant, force_release):
-    if merchant.close_browser or force_release:
-        try:
-            driver = driver_store[merchant.id]['driver']
-            del driver_store[merchant.id]
-            driver.close()
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except Exception:
-            pass
-    elif not CONFIG['hide_web_browser']:  # Since not headless mode, keep browser open but minimize the window
-        driver_store[merchant.id]['window'] = driver_store[merchant.id]['driver'].get_window_rect()
-        driver_store[merchant.id]['driver'].minimize_window()
+def close_webdriver(driver, merchant):
+    try:
+        if merchant.use_cookies:
+            persist_cookies(driver, merchant.id)
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception as e:
+        LOGGER.error(str(e) + ' - proceeding without persisting cookies')
+
+    try:
+        driver.close()
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
+        pass
 
     try:
         WEB_DRIVER_LOCK.release()
@@ -436,6 +434,51 @@ def release_webdriver(merchant, force_release):
         raise
     except Exception:
         pass
+
+
+def restore_cookies(driver, merchant_id):
+    try:
+        if not os.path.exists(absolute_path('program-files', 'cookies', merchant_id)):
+            return
+
+        with open(absolute_path('program-files', 'cookies', merchant_id), 'r', encoding='utf-8') as f:
+            cookies = f.read()
+
+        driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'restore-cookies.html'))
+        driver.execute_script("document.getElementById('content').textContent = '" + cookies + "'")
+        driver.execute_script("document.getElementById('status').textContent = 'dom-ready'")
+
+        seconds = 30
+        for i in range(seconds * 10):
+            if driver.find_element_by_id('status').text == 'done':
+                return
+            time.sleep(0.1)
+        error_msg = 'Unable to restore cookies after ' + str(seconds) + ' seconds'
+    except Exception as e:
+        error_msg = str(e)
+
+    LOGGER.error(error_msg + ' - proceeding without restoring cookies')
+
+
+def persist_cookies(driver, merchant_id):
+    driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'persist-cookies.html'))
+
+    seconds = 30
+    for i in range(seconds * 10):
+        if driver.find_element_by_id('status').text == 'dom-ready':
+            break
+        if i == seconds * 10 - 1:
+            LOGGER.error('Unable to restore cookies after ' + str(seconds) + ' seconds - proceeding without restoring cookies')
+            return
+        time.sleep(0.1)
+
+    cookies = driver.find_element_by_id('content').text
+
+    if not os.path.exists(absolute_path('program-files', 'cookies')):
+        os.mkdir(absolute_path('program-files', 'cookies'))
+
+    with open(absolute_path('program-files', 'cookies', merchant_id), 'w', encoding='utf-8') as f:
+        f.write(cookies)
 
 
 def absolute_path(*rel_paths):  # works cross platform when running source script or Pyinstaller binary
@@ -488,20 +531,20 @@ class Merchant:
         self.usr = str(config_entry['usr'])
         self.psw = str(config_entry['psw'])
         self.card = str(config_entry['card'])
-        self.close_browser = config_entry['close_browser']
 
         if CONFIG['mode'] == 'burst' and not config_entry.get('burst_count'):
             LOGGER.error(self.id + ' config is missing "burst_count"')
             sys.exit(1)
         self.burst_count = config_entry['burst_count']
 
-        # Optional config default values.
-        self.min_day = config_entry.get('timing', {}).get('min_day') or 2  # avoid off by one errors in all systems
-        self.max_day = config_entry.get('timing', {}).get('max_day')  # calculated dynamically if None is returned
-        self.burst_min_gap = config_entry.get('timing', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
-        self.burst_time_variance = config_entry.get('timing', {}).get('burst', {}).get('time_variance') or 14400  # 4 hours
-        self.spread_min_gap = config_entry.get('timing', {}).get('spread', {}).get('min_gap') or 14400  # 4 hours
-        self.spread_time_variance = config_entry.get('timing', {}).get('spread', {}).get('time_variance') or 14400  # 4 hours
+        # Optional advanced config or default values.
+        self.use_cookies = config_entry.get('advanced', {}).get('use_cookies', True)
+        self.min_day = config_entry.get('advanced', {}).get('min_day', 2)  # avoid off by one errors in all systems
+        self.max_day = config_entry.get('advanced', {}).get('max_day')  # calculated dynamically if None is returned
+        self.burst_min_gap = config_entry.get('advanced', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
+        self.burst_time_variance = config_entry.get('advanced', {}).get('burst', {}).get('time_variance', 14400)  # 4 hours
+        self.spread_min_gap = config_entry.get('advanced', {}).get('spread', {}).get('min_gap', 14400)  # 4 hours
+        self.spread_time_variance = config_entry.get('advanced', {}).get('spread', {}).get('time_variance', 14400)  # 4 hours
 
 
 if __name__ == '__main__':
@@ -523,9 +566,6 @@ if __name__ == '__main__':
     DAYS_IN_MONTH = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
     VERSION = 'v1.0.2-dev'
     VERSION_INT = 2
-
-    # configure cross thread global vars
-    driver_store = {}
 
     LOGGER.info('       __     __    __    _ __ ')
     LOGGER.info('  ____/ /__  / /_  / /_  (_) /_')
@@ -550,10 +590,10 @@ if __name__ == '__main__':
         try:
             CONFIG = yaml.safe_load(config_f.read())
         except yaml.YAMLError as yaml_e:
-            error_msg = '\n\nFormatting error in ' + config_to_open + '. Ensure ' + config_to_open + ' has the same structure and spacing as the examples in INSTRUCTIONS.txt.'
+            config_error_msg = '\n\nFormatting error in ' + config_to_open + '. Ensure ' + config_to_open + ' has the same structure and spacing as the examples in INSTRUCTIONS.txt.'
             if hasattr(yaml_e, 'problem_mark'):
-                error_msg += '\n\n' + str(yaml_e.problem_mark)
-            LOGGER.error(error_msg)
+                config_error_msg += '\n\n' + str(yaml_e.problem_mark)
+            LOGGER.error(config_error_msg)
             sys.exit(1)
 
     main()

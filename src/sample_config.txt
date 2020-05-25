@@ -15,5 +15,4 @@ any_card_description:
     usr: user
     psw: pass
     card: 1234
-    close_browser: no
     burst_count: 2

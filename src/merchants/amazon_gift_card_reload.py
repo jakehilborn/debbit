@@ -133,7 +133,7 @@ def handle_anti_automation_challenge(driver, merchant):
 
         LOGGER.info('amazon captcha detected')
         input('''
-Anti-automation captcha detected. Please follow these steps, future runs shouldn't need captcha input if you set "close_browser: no" in config.txt.
+Anti-automation captcha detected. Please follow these steps, future runs shouldn't need captcha input unless you set "use_cookies: no" in config.txt.
 
 1. Open the Firefox window that debbit created.
 2. Input the captcha / other anti-automation challenges.

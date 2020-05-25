@@ -44,7 +44,7 @@ def is_logged_in(driver, timeout=30, logged_out_element=None, logged_in_element=
         (driver.find_elements(*logged_in_element) and 'logged_in')
     )
 
-    if login_status == 'logged_out':  # TODO is there any way we know this is a close_browser false secondary purchase?
+    if login_status == 'logged_out':  # TODO is there any way we know this is a use_cookies:yes secondary purchase?
         LOGGER.info('login_status=logged_out, logging in now')
         return False
     else:

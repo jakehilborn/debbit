@@ -59,20 +59,20 @@ card_1:
   # section below for what to put here.
   card: 4444
 
-  # Closes browser in between purchases and clears data/cookies.
-  # "no" will reduce likelihood of captcha challenges and repeating multi-factor auth.
-  # "yes" can help avoid unexpected web page changes.
-  # Recommended to set to "no". Try setting to "yes" if seeing purchase failures.
-  close_browser: no
-
   # Does not apply to "spread" mode, only applies to "burst" mode. The amount
   # of purchases to do back-to-back. For example, if doing 50 total_purchases a
   # month, you may want to set to 5 so debbit only needs to run 10 times a month.
   burst_count: 1
 
-  # From here below are advanced settings to change the spacing between purchases. It's unlikely you'll
-  # want to change these. Refer to sample below to include these settings in your config.txt
-  timing:
+  # From here below are advanced settings. It's unlikely you'll want to change these.
+  # Refer to sample below to include these settings in your config.txt.
+  advanced:
+
+    # Cookies tell websites that the web browser has been seen before and does not always need a new login.
+    # "yes" will reduce likelihood of captcha challenges and repeating multi-factor auth.
+    # "no" can help avoid unexpected web page changes.
+    # Recommended to leave at "yes". Try setting to "no" if seeing purchase failures.
+    use_cookies: yes
 
     # day of the month to start making purchases. Recommended to leave at 2 to avoid potential off by one errors in all systems.
     min_day: 2
@@ -114,7 +114,6 @@ card_1:
     usr: you@domain.com
     psw: p@ssw0rd
     card: 1111222233334444
-    close_browser: no
     burst_count: 2
   xfinity_bill_pay:
     total_purchases: 20
@@ -122,7 +121,6 @@ card_1:
     amount_max: 20
     usr: username
     psw: p@ssw0rd
-    close_browser: no
     burst_count: 1
     card: 4444
 
@@ -134,7 +132,6 @@ card_2:
     usr: myotheraccount@domain.com
     psw: p@ssw0rd
     card: 5555666677778888
-    close_browser: no
     burst_count: 2
   xfinity_bill_pay:
     total_purchases: 20
@@ -142,10 +139,10 @@ card_2:
     amount_max: 20
     usr: username
     psw: p@ssw0rd
-    close_browser: no
     burst_count: 1
     card: 8888
-    timing:
+    advanced:
+      use_cookies: yes
       min_day: 2
       max_day:
       burst:
