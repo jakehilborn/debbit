@@ -1,7 +1,6 @@
 import logging
 import time
 
-from selenium import common
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
@@ -9,7 +8,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 import utils
 from result import Result
-from utils import cents_to_str
 
 LOGGER = logging.getLogger('debbit')
 
