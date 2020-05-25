@@ -60,7 +60,7 @@ def load_state(year, month):
 
 def load_merchant(card, merchant_name, merchant_conf):
     try:
-        web_automation = __import__('merchants.' + merchant_name, fromlist=["*"]).web_automation
+        web_automation = __import__('program-files.merchants.' + merchant_name, fromlist=["*"]).web_automation
     except Exception as e:
         LOGGER.error('Error loading ' + merchant_name + '.py from merchants folder')
         raise e
@@ -398,8 +398,8 @@ def get_webdriver(merchant):
     try:
         driver = webdriver.Firefox(options=options,
                                  service_log_path=os.devnull,
-                                 executable_path=absolute_path('geckodriver'),
-                                 firefox_profile=absolute_path('program-files', 'firefox-profile'))
+                                 executable_path=absolute_path('program-files', 'geckodriver'),
+                                 firefox_profile=absolute_path('program-files', 'selenium-cookies-extension', 'firefox-profile'))
     except SessionNotCreatedException:
         LOGGER.error('')
         LOGGER.error('Firefox not found. Please install the latest version of Firefox and try again.')
@@ -556,7 +556,7 @@ if __name__ == '__main__':
     stdout_handler.setFormatter(logging.Formatter(log_format))
     LOGGER.addHandler(stdout_handler)
 
-    file_handler = logging.FileHandler(absolute_path('debbit_log.log'))
+    file_handler = logging.FileHandler(absolute_path('program-files', 'debbit_log.log'))
     file_handler.setFormatter(logging.Formatter(log_format))
     LOGGER.addHandler(file_handler)
 
