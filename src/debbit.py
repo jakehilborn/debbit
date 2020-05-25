@@ -336,7 +336,7 @@ def record_failure(driver, merchant, error_msg):
     try:
         driver.save_screenshot(filename + '.png')
 
-        dom = driver.execute_script('return document.documentElement.outerHTML')
+        dom = driver.execute_script("return document.documentElement.outerHTML")
         dom = scrub_sensitive_data(dom, merchant)
 
         with open(filename + '.html', 'w', encoding='utf-8') as f:
@@ -401,7 +401,7 @@ def get_webdriver(merchant):
         options.headless = CONFIG['hide_web_browser']
         try:
             driver_store[merchant.id] = {
-                'driver': webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'), service_log_path=os.devnull),
+                'driver': webdriver.Firefox(options=options, executable_path=absolute_path('geckodriver'), service_log_path=os.devnull, firefox_profile=absolute_path('program-files', 'firefox-profile')),
                 'window': None
             }
         except SessionNotCreatedException:
@@ -413,13 +413,16 @@ def get_webdriver(merchant):
     if driver_store[merchant.id]['window']:  # if browser window minimized, restore to previous position/size
         driver_store[merchant.id]['driver'].set_window_rect(**driver_store[merchant.id]['window'])
 
-    return driver_store[merchant.id]['driver']
+    driver = driver_store[merchant.id]['driver']
+    restore_cookies(driver)  # TODO try/catch
+    return driver
 
 
 def release_webdriver(merchant, force_release):
     if merchant.close_browser or force_release:
         try:
             driver = driver_store[merchant.id]['driver']
+            persist_cookies(driver)  # TODO try/catch
             del driver_store[merchant.id]
             driver.close()
         except (KeyboardInterrupt, SystemExit):
@@ -436,6 +439,33 @@ def release_webdriver(merchant, force_release):
         raise
     except Exception:
         pass
+
+
+def restore_cookies(driver):
+    if not os.path.exists(absolute_path('cookies.txt')):
+        return
+
+    with open(absolute_path('cookies.txt'), 'r', encoding='utf-8') as f:
+        cookies = f.read()
+
+    driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'restore-cookies.html'))
+    driver.execute_script("document.getElementById('content').textContent = '" + cookies + "'")
+    driver.execute_script("document.getElementById('status').textContent = 'dom-ready'")
+
+    while driver.find_element_by_id('status').text != 'done':
+        time.sleep(0.1)
+
+
+def persist_cookies(driver):
+    driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'persist-cookies.html'))
+
+    while driver.find_element_by_id('status').text != 'dom-ready':
+        time.sleep(0.1)
+
+    cookies = driver.find_element_by_id('content').text
+
+    with open(absolute_path('cookies.txt'), 'w', encoding='utf-8') as f:
+        f.write(cookies)
 
 
 def absolute_path(*rel_paths):  # works cross platform when running source script or Pyinstaller binary
