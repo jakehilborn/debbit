@@ -279,7 +279,7 @@ def web_automation_wrapper(merchant):
     failures = 0
     threshold = 5
     while failures < threshold:
-        driver = get_webdriver(merchant.id)
+        driver = get_webdriver(merchant)
         amount = random.randint(merchant.amount_min, merchant.amount_max)
         error_msg = 'Refer to prior log messages for error details'
         LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.id + ' now')
@@ -296,7 +296,7 @@ def web_automation_wrapper(merchant):
             failures += 1
 
             record_failure(driver, merchant, error_msg)
-            close_webdriver(driver, merchant.id)
+            close_webdriver(driver, merchant)
 
             if failures < threshold:
                 LOGGER.info(str(failures) + ' of ' + str(threshold) + ' ' + merchant.id + ' attempts done, trying again in ' + str(60 * failures ** 4) + ' seconds')
@@ -308,7 +308,7 @@ def web_automation_wrapper(merchant):
                 notify_failure(exit_msg)
                 raise Exception(exit_msg)  # exits this merchant's thread, not entire program
 
-        close_webdriver(driver, merchant.id)
+        close_webdriver(driver, merchant)
 
         if result == Result.success:
             record_transaction(merchant.id, amount)
@@ -391,7 +391,7 @@ def notify_failure(exit_msg):
         LOGGER.error(e.message)
 
 
-def get_webdriver(merchant_id):
+def get_webdriver(merchant):
     WEB_DRIVER_LOCK.acquire()  # Only execute one purchase at a time so the console log messages don't inter mix
     options = Options()
     options.headless = CONFIG['hide_web_browser']
@@ -406,13 +406,16 @@ def get_webdriver(merchant_id):
         WEB_DRIVER_LOCK.release()
         sys.exit(1)
 
-    restore_cookies(driver, merchant_id)  # TODO try/catch
+    if merchant.use_cookies:
+        restore_cookies(driver, merchant.id)  # TODO try/catch
+
     return driver
 
 
-def close_webdriver(driver, merchant_id):
+def close_webdriver(driver, merchant):
     try:
-        persist_cookies(driver, merchant_id)
+        if merchant.use_cookies:
+            persist_cookies(driver, merchant.id)
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception:
@@ -519,13 +522,14 @@ class Merchant:
             sys.exit(1)
         self.burst_count = config_entry['burst_count']
 
-        # Optional config default values.
-        self.min_day = config_entry.get('timing', {}).get('min_day') or 2  # avoid off by one errors in all systems
-        self.max_day = config_entry.get('timing', {}).get('max_day')  # calculated dynamically if None is returned
-        self.burst_min_gap = config_entry.get('timing', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
-        self.burst_time_variance = config_entry.get('timing', {}).get('burst', {}).get('time_variance') or 14400  # 4 hours
-        self.spread_min_gap = config_entry.get('timing', {}).get('spread', {}).get('min_gap') or 14400  # 4 hours
-        self.spread_time_variance = config_entry.get('timing', {}).get('spread', {}).get('time_variance') or 14400  # 4 hours
+        # Optional advanced config or default values.
+        self.use_cookies = config_entry.get('advanced', {}).get('use_cookies', True)
+        self.min_day = config_entry.get('advanced', {}).get('min_day', 2)  # avoid off by one errors in all systems
+        self.max_day = config_entry.get('advanced', {}).get('max_day')  # calculated dynamically if None is returned
+        self.burst_min_gap = config_entry.get('advanced', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
+        self.burst_time_variance = config_entry.get('advanced', {}).get('burst', {}).get('time_variance', 14400)  # 4 hours
+        self.spread_min_gap = config_entry.get('advanced', {}).get('spread', {}).get('min_gap', 14400)  # 4 hours
+        self.spread_time_variance = config_entry.get('advanced', {}).get('spread', {}).get('time_variance', 14400)  # 4 hours
 
 
 if __name__ == '__main__':
