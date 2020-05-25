@@ -65,4 +65,3 @@ function persistCookies() {
 
 browser.tabs.onUpdated.addListener(onRestoreCookiesPage, {urls: ['file:///*restore-cookies.html']})
 browser.tabs.onUpdated.addListener(onPersistCookiesPage, {urls: ['file:///*persist-cookies.html']})
-browser.browserAction.onClicked.addListener(restoreCookies);
