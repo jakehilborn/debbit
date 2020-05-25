@@ -71,7 +71,7 @@ card_1:
     # Cookies tell websites that the web browser has been seen before and does not always need a new login.
     # "yes" will reduce likelihood of captcha challenges and repeating multi-factor auth.
     # "no" can help avoid unexpected web page changes.
-    # Recommended to set to "yes". Try setting to "no" if seeing purchase failures.
+    # Recommended to leave at "yes". Try setting to "no" if seeing purchase failures.
     use_cookies: yes
 
     # day of the month to start making purchases. Recommended to leave at 2 to avoid potential off by one errors in all systems.
