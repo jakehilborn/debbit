@@ -60,7 +60,7 @@ def load_state(year, month):
 
 def load_merchant(card, merchant_name, merchant_conf):
     try:
-        web_automation = __import__('program-files.merchants.' + merchant_name, fromlist=["*"]).web_automation
+        web_automation = __import__('program_files.merchants.' + merchant_name, fromlist=["*"]).web_automation
     except Exception as e:
         LOGGER.error('Error loading ' + merchant_name + '.py from merchants folder')
         raise e
@@ -398,8 +398,8 @@ def get_webdriver(merchant):
     try:
         driver = webdriver.Firefox(options=options,
                                  service_log_path=os.devnull,
-                                 executable_path=absolute_path('program-files', 'geckodriver'),
-                                 firefox_profile=absolute_path('program-files', 'selenium-cookies-extension', 'firefox-profile'))
+                                 executable_path=absolute_path('program_files', 'geckodriver'),
+                                 firefox_profile=absolute_path('program_files', 'selenium-cookies-extension', 'firefox-profile'))
     except SessionNotCreatedException:
         LOGGER.error('')
         LOGGER.error('Firefox not found. Please install the latest version of Firefox and try again.')
@@ -438,13 +438,13 @@ def close_webdriver(driver, merchant):
 
 def restore_cookies(driver, merchant_id):
     try:
-        if not os.path.exists(absolute_path('program-files', 'cookies', merchant_id)):
+        if not os.path.exists(absolute_path('program_files', 'cookies', merchant_id)):
             return
 
-        with open(absolute_path('program-files', 'cookies', merchant_id), 'r', encoding='utf-8') as f:
+        with open(absolute_path('program_files', 'cookies', merchant_id), 'r', encoding='utf-8') as f:
             cookies = f.read()
 
-        driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'restore-cookies.html'))
+        driver.get('file://' + absolute_path('program_files', 'selenium-cookies-extension', 'restore-cookies.html'))
         driver.execute_script("document.getElementById('content').textContent = '" + cookies + "'")
         driver.execute_script("document.getElementById('status').textContent = 'dom-ready'")
 
@@ -461,7 +461,7 @@ def restore_cookies(driver, merchant_id):
 
 
 def persist_cookies(driver, merchant_id):
-    driver.get('file://' + absolute_path('program-files', 'selenium-cookies-extension', 'persist-cookies.html'))
+    driver.get('file://' + absolute_path('program_files', 'selenium-cookies-extension', 'persist-cookies.html'))
 
     seconds = 30
     for i in range(seconds * 10):
@@ -474,10 +474,10 @@ def persist_cookies(driver, merchant_id):
 
     cookies = driver.find_element_by_id('content').text
 
-    if not os.path.exists(absolute_path('program-files', 'cookies')):
-        os.mkdir(absolute_path('program-files', 'cookies'))
+    if not os.path.exists(absolute_path('program_files', 'cookies')):
+        os.mkdir(absolute_path('program_files', 'cookies'))
 
-    with open(absolute_path('program-files', 'cookies', merchant_id), 'w', encoding='utf-8') as f:
+    with open(absolute_path('program_files', 'cookies', merchant_id), 'w', encoding='utf-8') as f:
         f.write(cookies)
 
 
@@ -556,7 +556,7 @@ if __name__ == '__main__':
     stdout_handler.setFormatter(logging.Formatter(log_format))
     LOGGER.addHandler(stdout_handler)
 
-    file_handler = logging.FileHandler(absolute_path('program-files', 'debbit_log.log'))
+    file_handler = logging.FileHandler(absolute_path('program_files', 'debbit_log.log'))
     file_handler.setFormatter(logging.Formatter(log_format))
     LOGGER.addHandler(file_handler)
 
