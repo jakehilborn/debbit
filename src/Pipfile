@@ -9,6 +9,7 @@ verify_ssl = true
 pyyaml = "*"
 selenium = "*"
 sendgrid = "*"
+coverage = "*"
 
 [requires]
 python_version = "3"
