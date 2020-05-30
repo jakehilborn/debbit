@@ -18,98 +18,92 @@ layout: default
 1. Debbit was built to be a set it and forget solution. It will run month to month automatically scheduling and executing purchases to meet your spending requirements. After seeing how it works, you'll want to set 'hide_web_browser: yes' so Firefox stops popping up on your screen while you're using your computer.
 
 ## Config.txt Explanation
-
 {% highlight yaml%}
-card_1:
-  amazon_gift_card_reload: reallylongline reallylongline reallylongline reallylongline reallylongline reallylongline reallylongline reallylongline reallylongline reallylongline reallylongline reallylongline reallylongline reallylongline 
-    total_purchases: 40
-    amount_min: 50
-    amount_max: 59
-    usr: you@domain.com
-    psw: p@ssw0rd
-    card: 1111222233334444
-    burst_count: 2
-  xfinity_bill_pay:
-    total_purchases: 20
-    amount_min: 10
-    amount_max: 20
-    usr: username
-    psw: p@ssw0rd
-    burst_count: 1
-    card: 4444
-{% endhighlight %}
-
-
-# set to "burst" if running on a computer that is not always on (e.g. a laptop). Set to "spread" if running on a server or computer that never sleeps.
+# Set to "burst" if running on a computer that is not always on (e.g. a laptop).
+# Set to "spread" if running on a server or computer that never sleeps.
 mode: burst
 
-# set to "yes" to run web automation invisibly in the background, aka headless mode.
+# Set to "yes" to run web automation invisibly in the background, aka headless mode.
 hide_web_browser: no
 
-# Optional. If debbit is unable to complete a purchase after 5 tries you'll be notified via email.
+# Optional. If debbit is unable to complete a purchase
+# after 5 tries you'll be notified via email.
 notify_failure: your.email@website.com
 
-# You can put any name for the card here.
-card_1:
+# You can put any name for the debit card here.
+example_card_description:
 
-# The name of the merchant. This must match the file in
-# the merchants folder, e.g. example_merchant.py
+# The name of the merchant. This must match the file in the
+# program_files/merchants folder, e.g. example_merchant.py
   example_merchant:
 
-  # card_1 will make this many purchases from this merchant each month
-  total_purchases: 10
+    # example_card_description will make this many
+    # purchases from this merchant each month
+    total_purchases: 10
 
-  # Random price between amount_min and amount_max will be spent.
-  # These numbers are in cents.
-  amount_min: 10
-  amount_max: 20
+    # Random price between amount_min and amount_max will be spent.
+    # These numbers are in cents.
+    amount_min: 10
+    amount_max: 20
 
-  # Your username and password to login to the merchant website.
-  usr: you@domain.com
-  psw: p@ssw0rd
+    # Your username and password to login to the merchant website.
+    usr: you@domain.com
+    psw: p@ssw0rd
 
-  # Card description, please refer to the Merchant Info
-  # section below for what to put here.
-  card: 4444
+    # Card description, refer to the "Config.txt Merchant Info"
+    # section below for what to put here.
+    card: 4444
 
-  # Does not apply to "spread" mode, only applies to "burst" mode. The amount
-  # of purchases to do back-to-back. For example, if doing 50 total_purchases a
-  # month, you may want to set to 5 so debbit only needs to run 10 times a month.
-  burst_count: 1
+    # Does not apply to "spread" mode, only applies to "burst" mode. The amount
+    # of purchases to do back-to-back. For example, if doing 50 total_purchases a
+    # month, you may want to set to 5 so debbit only needs to run 10 times a month.
+    burst_count: 1
 
-  # From here below are advanced settings. It's unlikely you'll want to change these.
-  # Refer to sample below to include these settings in your config.txt.
-  advanced:
+    # From here below are advanced settings. It's unlikely you'll
+    # want to change these. Refer to the "Config.txt Example" section
+    # below to include these settings in your config.txt.
+    advanced:
 
-    # Cookies tell websites that the web browser has been seen before and does not always need a new login.
-    # "yes" will reduce likelihood of captcha challenges and repeating multi-factor auth.
-    # "no" can help avoid unexpected web page changes.
-    # Recommended to leave at "yes". Try setting to "no" if seeing purchase failures.
-    use_cookies: yes
+      # Cookies tell websites that the web browser has been seen before
+      # and does not always need a new login. "yes" will reduce likelihood
+      # of captcha challenges and repeating multi-factor auth. "no" can help
+      # avoid unexpected web page changes. Recommended to leave at "yes".
+      # Try setting to "no" if seeing purchase failures.
+      use_cookies: yes
 
-    # day of the month to start making purchases. Recommended to leave at 2 to avoid potential off by one errors in all systems.
-    min_day: 2
+      # Day of the month to start making purchases. Recommended to
+      # leave at 2 to avoid potential off by one errors in all systems.
+      min_day: 2
 
-    # day of the month to stop making purchases. Useful if your cable bill auto-pays on the 22nd of the month, for example. Leave blank to default to the end of the month minus one day.
-    max_day: 22
+      # Day of the month to stop making purchases. Useful if your cable
+      # bill auto-pays on the 22nd of the month, for example. Leave blank
+      # to default to the end of the month minus one day.
+      max_day: 22
 
-    # Bursts a few purchases in a row. Use this mode when running on a laptop so debbit anticipates sleep/shutdown throughout the month.
-    burst:
+      # Bursts a few purchases in a row. Use this mode when running on a
+      # laptop so debbit anticipates sleep/shutdown throughout the month.
+      burst:
 
-      # minimum gap in seconds between each burst. Each burst will be spaced out by at least this much.
-      min_gap: 79200
+        # Minimum gap in seconds between each burst.
+        # Each burst will be spaced out by at least this much.
+        min_gap: 79200
 
-      # random extra time up to this number added to burst min_gap between gaps to allow for some randomness in the timing
-      time_variance: 14400
+        # Random extra time up to this number added to burst min_gap
+        # between gaps to allow for some randomness in the timing
+        time_variance: 14400
 
-    # Spaces out purchases evenly with some randomness through the month. Use this mode if running on a server or computer that never sleeps.
-    spread:
+      # Spaces out purchases evenly with some randomness through the month.
+      # Use this mode if running on a server or computer that never sleeps.
+      spread:
 
-      # minimum gap in seconds between each purchase. This usually only applies if you start this program late in the month.
-      min_gap: 43200
+        # Minimum gap in seconds between each purchase.
+        # This usually only applies if you start this program late in the month.
+        min_gap: 43200
 
-      # extra time before & after each scheduled purchase to allow for some randomness in the timing
-      time_variance: 14400
+        # Extra time before & after each scheduled purchase
+        # to allow for some randomness in the timing
+        time_variance: 14400
+{% endhighlight %}
 
 ##################
 Config.txt Example
