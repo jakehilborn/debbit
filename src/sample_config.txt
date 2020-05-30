@@ -7,7 +7,7 @@ mode: burst
 hide_web_browser: no
 notify_failure: your.email@website.com
 
-any_card_description:
+example_card_description:
   example_merchant:
     total_purchases: 20
     amount_min: 10
