@@ -1,7 +1,7 @@
 import logging
 import time
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
@@ -16,7 +16,7 @@ How to add a new merchant module to debbit
 
 Create a new .py file in the merchants directory. Create a new block in config.txt such that the merchant name matches
 the name of your new file (excluding .py). The file must have a function with the signature
-`def web_automation(driver, merchant, amount):` that returns a `Result` in all possible scenarios. In error scenarios you
+`def web_automation(driver, merchant, amount):` that returns a `Result` in all possible scenarios. In error scenarios, you
 may return Result.failed or simply let whatever exception be thrown. It will be caught and handled correctly by debbit.py
 
 For more complex scenarios, please refer to the other merchant .py files.
@@ -33,7 +33,12 @@ def web_automation(driver, merchant, amount):
 
     if not logged_in:
         time.sleep(2)  # pause to let user watch what's happening - not necessary for real merchants
-        driver.find_element_by_id('username').send_keys(merchant.usr)
+
+        try:  # some websites will have the username auto-filled in due to a previous login
+            driver.find_element_by_id('username').send_keys(merchant.usr)
+        except ElementNotInteractableException:
+            pass
+
         time.sleep(2)  # pause to let user watch what's happening - not necessary for real merchants
         driver.find_element_by_id('password').send_keys(merchant.usr)
         time.sleep(2)  # pause to let user watch what's happening - not necessary for real merchants
