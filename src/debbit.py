@@ -10,6 +10,7 @@ import urllib.request
 from datetime import datetime
 from datetime import timedelta
 from threading import Timer, Lock, Thread
+import coverage
 
 import yaml  # PyYAML
 from selenium import webdriver
@@ -284,7 +285,8 @@ def web_automation_wrapper(merchant):
         error_msg = 'Refer to prior log messages for error details'
         LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.id + ' now')
         try:
-            result = merchant.web_automation(driver, merchant, amount)
+            with Coverage() as cov:
+                result = merchant.web_automation(driver, merchant, amount)
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception:
@@ -295,7 +297,7 @@ def web_automation_wrapper(merchant):
             LOGGER.error(merchant.id + ' error: ' + error_msg)
             failures += 1
 
-            record_failure(driver, merchant, error_msg)
+            record_failure(driver, merchant, error_msg, cov)
             close_webdriver(driver, merchant)
 
             if failures < threshold:
@@ -322,7 +324,7 @@ def web_automation_wrapper(merchant):
         return result
 
 
-def record_failure(driver, merchant, error_msg):
+def record_failure(driver, merchant, error_msg, cov):
     if not os.path.exists(absolute_path('failures')):
         os.mkdir(absolute_path('failures'))
 
@@ -341,8 +343,15 @@ def record_failure(driver, merchant, error_msg):
             f.write(dom)
     except (KeyboardInterrupt, SystemExit):
         raise
-    except Exception as e:
-        LOGGER.error('record_failure error: ' + traceback.format_exc())
+    except Exception:
+        LOGGER.error('record_failure DOM error: ' + traceback.format_exc())
+
+    try:
+        cov.html_report(directory=absolute_path(filename + '_' + 'coverage'), include='*/merchants/*')
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
+        LOGGER.error('record_failure coverage error: ' + traceback.format_exc())
 
 
 def scrub_sensitive_data(data, merchant):
@@ -517,6 +526,24 @@ def update_check():
     LOGGER.info(changelog)
 
     return
+
+
+class Coverage:
+    def __init__(self):
+        if sys.gettrace():
+            LOGGER.warning('Debugger detected. Not attaching coverage module to merchant automation since it disables the debugger.')
+            self.cov = None
+        else:
+            self.cov = coverage.Coverage(data_file=None, branch=True)
+
+    def __enter__(self):
+        if self.cov:
+            self.cov.start()
+        return self.cov
+
+    def __exit__(self, type, value, traceback):
+        if self.cov:
+            self.cov.stop()
 
 
 class Merchant:
