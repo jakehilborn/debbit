@@ -324,7 +324,7 @@ def web_automation_wrapper(merchant):
         return result
 
 
-def record_failure(driver, merchant, error_msg, cov):  # TODO finish cov implementation
+def record_failure(driver, merchant, error_msg, cov):
     if not os.path.exists(absolute_path('failures')):
         os.mkdir(absolute_path('failures'))
 
