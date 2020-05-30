@@ -587,6 +587,9 @@ if __name__ == '__main__':
     file_handler.setFormatter(logging.Formatter(log_format))
     LOGGER.addHandler(file_handler)
 
+    # workaround so PyInstaller can dynamically load program_files/merchants/*.py
+    sys.path.insert(0, absolute_path())
+
     # configure global constants
     STATE_WRITE_LOCK = Lock()
     WEB_DRIVER_LOCK = Lock()
