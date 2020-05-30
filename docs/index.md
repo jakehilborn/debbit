@@ -9,15 +9,33 @@ layout: default
 1. Download [debbit](https://github.com/jakehilborn/debbit/releases) if you haven't done so yet, then unzip the download.
 
 1. Run debbit to see a (fake) example purchase, refer to your operating system:  
-    Mac: Double click on `debbit`. If using Catalina, to run for the first time right click on `debbit`, click Open, and then click the Open button.  
-    Windows: Double click on `debbit_keep_window_open.bat`  
-    Linux: [instructions here](https://github.com/jakehilborn/debbit/blob/master/src/HOW_TO_RUN_FROM_SOURCE.txt)
+- Mac: Double click on `debbit`. If using Catalina, to run for the first time right click on `debbit`, click Open, and then click the Open button.  
+- Windows: Double click on `debbit_keep_window_open.bat`  
+- Linux: [Instructions here](https://github.com/jakehilborn/debbit/blob/master/src/HOW_TO_RUN_FROM_SOURCE.txt)
 
-1. To make debbit work for real, edit the file config.txt. TODO instructions below?
+1. To make debbit work for real, edit the file config.txt. Refer to [config.txt Explanation](#configtxt-explanation) for info. **Important**: config.txt must have the correct structure (spaces, `:`'s, etc.), [config.txt Example](#configtxt-example) is a good resource to copy/paste and then edit the bits you need.
 
-1. Debbit was built to be a set it and forget solution. It will run month to month automatically scheduling and executing purchases to meet your spending requirements. After seeing how it works, you'll want to set 'hide_web_browser: yes' so Firefox stops popping up on your screen while you're using your computer.
+1. Debbit was built to be a set it and forget solution. It will run month to month automatically scheduling and executing purchases to meet your spending requirements. After seeing how it works, you'll want to set 'hide_web_browser: yes' so Firefox stops popping up on your screen while you're using your computer. You may also want to make debbit automatically run when your computer starts up:
+- Mac instructions
+- Windows instructions
 
-## Config.txt Explanation
+## F.A.Q.
+
+#### How do I see how many purchases debbit has made?
+Open the folder 'state' and click the file for this month. It will show 'purchase_count' for each merchant.
+
+#### Debbit's web automation failed, how do I get it fixed?
+In the failures folder there will be files with timestamps for names. Each timestamp will have 4 pieces ending in `.txt`, `.png`, `.html`, and a folder ending in `coverage`. Open the .png file and make sure it doesn't have your credit card number or password showing. Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there. You can attach one error or all of them, the more errors to inspect the more helpful.
+
+#### Can debbit automate purchases for other websites?
+Yes, please open an issue on GitHub and I'll work with you to get it automated.
+
+#### What is debbit's homepage?
+https://github.com/jakehilborn/debbit
+
+
+## config.txt Explanation
+
 {% highlight yaml%}
 # Set to "burst" if running on a computer that is not always on (e.g. a laptop).
 # Set to "spread" if running on a server or computer that never sleeps.
@@ -50,7 +68,7 @@ example_card_description:
     usr: you@domain.com
     psw: p@ssw0rd
 
-    # Card description, refer to the "Config.txt Merchant Info"
+    # Card description, refer to the "config.txt Merchant Info"
     # section below for what to put here.
     card: 4444
 
@@ -60,7 +78,7 @@ example_card_description:
     burst_count: 1
 
     # From here below are advanced settings. It's unlikely you'll
-    # want to change these. Refer to the "Config.txt Example" section
+    # want to change these. Refer to the "config.txt Example" section
     # below to include these settings in your config.txt.
     advanced:
 
@@ -105,15 +123,14 @@ example_card_description:
         time_variance: 14400
 {% endhighlight %}
 
-##################
-Config.txt Example
-##################
+## config.txt Example
 
+{% highlight yaml%}
 mode: burst
 hide_web_browser: yes
 notify_failure: your.email@website.com
 
-card_1:
+blue_debbit_card:
   amazon_gift_card_reload:
     total_purchases: 40
     amount_min: 50
@@ -131,7 +148,7 @@ card_1:
     burst_count: 1
     card: 4444
 
-card_2:
+red_debbit_card:
   amazon_gift_card_reload:
     total_purchases: 40
     amount_min: 50
@@ -158,17 +175,14 @@ card_2:
       spread:
         min_gap: 17280
         time_variance: 14400
+{% endhighlight %}
 
-########################
-Config.txt Merchant Info
-########################
+## config.txt Merchant Info
 
+{% highlight yaml%}
 amazon_gift_card_reload:
   amount_min: 50 # Amazon's gift card minimum is 50 cents
   card: 1111222233334444 # Amazon often requires the full 16 digit credit card number to verify you own the card before purchase.
-
-xfinity_bill_pay:
-  card: 4444 # Put last 4 digits of card
 
 att_bill_pay:
   amount_min: 100 # AT&T minimum payment is $1
@@ -178,17 +192,6 @@ optimum_bill_pay:
   amount_min: 100 # Optimum minimum payment is $1
   card: Blue Debit Card # Card name as saved in Optimum account
 
-#################
-OTHER INFORMATION
-#################
-Q. How do I see how many purchases debbit has made?
-A. Open the folder 'state' and click the file for this month. It will show 'purchase_count' for each merchant.
-
-Q. Debbit's web automation failed, how do I get it fixed?
-A. In the failures folder there will be files with timestamps for names. Each timestamp will have 3 files ending in .txt, .png, and .html. Open the .png file and make sure it doesn't have your credit card number or password showing. Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there.
-
-Q. Can debbit automate purchases for other websites?
-A. Yes, please open an issue on GitHub and I'll work with you to get it automated.
-
-Q. What is debbit's homepage?
-A. https://github.com/jakehilborn/debbit
+xfinity_bill_pay:
+  card: 4444 # Put last 4 digits of card
+{% endhighlight %}

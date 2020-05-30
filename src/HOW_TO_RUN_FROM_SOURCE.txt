@@ -1,6 +1,7 @@
 If you want to use debbit on mac/Windows please download a release from https://github.com/jakehilborn/debbit/releases
 If you want to develop debbit or use on Linux follow instructions below.
 
+0. Clone this GitHub repo or download the source code
 1. Install the latest version of Firefox
 2. Download the latest geckodriver for your OS from here https://github.com/mozilla/geckodriver/releases
     Extract the zip/tar.gz and place `geckodriver` (or `geckodriver.exe`) in the same directory as debbit.py
