@@ -284,20 +284,14 @@ def web_automation_wrapper(merchant):
         amount = random.randint(merchant.amount_min, merchant.amount_max)
         error_msg = 'Refer to prior log messages for error details'
         LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.id + ' now')
-        # cov = coverage.Coverage(data_file=None, branch=True)
-        # cov.start()
         try:
-            print('sys.gettrace() before with: ' + str(sys.gettrace()))
             with Coverage() as cov:
-                print('sys.gettrace() inside with: ' + str(sys.gettrace()))
                 result = merchant.web_automation(driver, merchant, amount)
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception:
             result = Result.failed
             error_msg = traceback.format_exc()
-
-        print('sys.gettrace() after with: ' + str(sys.gettrace()))
 
         if result == Result.failed:
             LOGGER.error(merchant.id + ' error: ' + error_msg)
@@ -350,15 +344,14 @@ def record_failure(driver, merchant, error_msg, cov):  # TODO finish cov impleme
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception:
-        LOGGER.error('record_failure error: ' + traceback.format_exc())
+        LOGGER.error('record_failure DOM error: ' + traceback.format_exc())
 
     try:
-        print('saving cov files')
         cov.html_report(directory=absolute_path(filename + '_' + 'coverage'), include='*/merchants/*')
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception:
-        LOGGER.error('record_failure error: ' + traceback.format_exc())
+        LOGGER.error('record_failure coverage error: ' + traceback.format_exc())
 
 
 def scrub_sensitive_data(data, merchant):
@@ -537,7 +530,6 @@ def update_check():
 
 class Coverage:
     def __init__(self):
-        print('Tracing init')
         if sys.gettrace():
             LOGGER.warning('Debugger detected. Not attaching coverage module to merchant automation since it disables the debugger.')
             self.cov = None
@@ -545,13 +537,11 @@ class Coverage:
             self.cov = coverage.Coverage(data_file=None, branch=True)
 
     def __enter__(self):
-        print('Tracing enter')
         if self.cov:
             self.cov.start()
         return self.cov
 
     def __exit__(self, type, value, traceback):
-        print('Tracing exit')
         if self.cov:
             self.cov.stop()
 
