@@ -25,8 +25,6 @@ For more complex scenarios, please refer to the other merchant .py files.
 
 
 def web_automation(driver, merchant, amount):
-    print('merchant sys.gettrace(): ' + str(sys.gettrace()))
-
     driver.get('https://jakehilborn.github.io/debbit/example-merchant/login.html')
 
     logged_in = utils.is_logged_in(driver, timeout=90,
@@ -49,9 +47,6 @@ def web_automation(driver, merchant, amount):
         return Result.skipped
     elif utils.str_to_cents(cur_balance) < amount:
         amount = utils.str_to_cents(cur_balance)
-
-    test = 1
-    print("a" + test)
 
     time.sleep(2)  # pause to let user watch what's happening - not necessary for real merchants
     driver.find_element_by_xpath("//*[contains(text(), 'card ending in " + merchant.card + "')]").click()
