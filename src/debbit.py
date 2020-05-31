@@ -282,7 +282,7 @@ def web_automation_wrapper(merchant):
     while failures < threshold:
         driver = get_webdriver(merchant)
         amount = random.randint(merchant.amount_min, merchant.amount_max)
-        error_msg = 'Refer to prior log messages for error details'
+        error_msg = None
         LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.id + ' now')
         try:
             with Coverage() as cov:
@@ -294,6 +294,8 @@ def web_automation_wrapper(merchant):
             error_msg = traceback.format_exc()
 
         if result == Result.failed:
+            if not error_msg:
+                error_msg = 'Result.failed'
             LOGGER.error(merchant.id + ' error: ' + error_msg)
             failures += 1
 
@@ -310,16 +312,18 @@ def web_automation_wrapper(merchant):
                 notify_failure(exit_msg)
                 raise Exception(exit_msg)  # exits this merchant's thread, not entire program
 
-        close_webdriver(driver, merchant)
-
-        if result == Result.success:
-            record_transaction(merchant.id, amount)
-
         if result == Result.unverified:
+            record_failure(driver, merchant, 'Result.unverified', cov)
+            close_webdriver(driver, merchant)
             exit_msg = 'Unable to verify ' + merchant.id + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
             LOGGER.error(exit_msg)
             notify_failure(exit_msg)
             sys.exit(1)  # exits this merchant's thread, not entire program
+
+        close_webdriver(driver, merchant)
+
+        if result == Result.success:
+            record_transaction(merchant.id, amount)
 
         return result
 
