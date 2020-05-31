@@ -121,6 +121,7 @@ example_card_description:
         # Extra time before & after each scheduled purchase
         # to allow for some randomness in the timing
         time_variance: 14400
+
 {% endhighlight %}
 
 ## config.txt Example
@@ -149,14 +150,6 @@ blue_debbit_card:
     card: 4444
 
 red_debbit_card:
-  amazon_gift_card_reload:
-    total_purchases: 40
-    amount_min: 50
-    amount_max: 59
-    usr: myotheraccount@domain.com
-    psw: p@ssw0rd
-    card: 5555666677778888
-    burst_count: 2
   xfinity_bill_pay:
     total_purchases: 20
     amount_min: 10
@@ -175,6 +168,7 @@ red_debbit_card:
       spread:
         min_gap: 17280
         time_variance: 14400
+
 {% endhighlight %}
 
 ## config.txt Merchant Info
