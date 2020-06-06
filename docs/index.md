@@ -22,7 +22,7 @@ layout: default
 ## F.A.Q.
 
 #### How do I see how many purchases debbit has made?
-Open the folder 'state' and click the file for this month. It will show 'purchase_count' for each merchant.
+Open the folder `state` and click the file for this month. It will show `purchase_count` for each merchant.
 
 #### Debbit's web automation failed, how do I get it fixed?
 In the failures folder there will be files with timestamps for names. Each timestamp will have 4 pieces ending in `.txt`, `.png`, `.html`, and a folder ending in `coverage`. Open the .png file and make sure it doesn't have your credit card number or password showing. Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there. You can attach one error or all of them, the more errors to inspect the more helpful.
