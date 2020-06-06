@@ -17,7 +17,7 @@ title: Instructions
 1. To make debbit work for real, edit the file config.txt. Refer to [config.txt Explanation](#configtxt-explanation) for info. **Important**: config.txt must have the correct structure (spaces, `:`'s, etc.), [config.txt Example](#configtxt-example) is a good resource to copy/paste and then edit the bits you need.
 
 1. Debbit was built to be a set it and forget solution. It will run month to month automatically scheduling and executing purchases to meet your spending requirements. After seeing how it works, you'll want to set `hide_web_browser: yes` so Firefox stops popping up on your screen while you're using your computer. You may also want to make debbit automatically run when your computer starts up:
-- Mac instructions
+- [Mac instructions](https://jakehilborn.github.io/debbit/macOS-auto-run)
 - Windows instructions
 
 ## F.A.Q.
