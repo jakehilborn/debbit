@@ -18,7 +18,7 @@ title: Instructions
 
 1. Debbit was built to be a set it and forget solution. It will run month to month automatically scheduling and executing purchases to meet your spending requirements. After seeing how it works, you'll want to set `hide_web_browser: yes` so Firefox stops popping up on your screen while you're using your computer. You may also want to make debbit automatically run when your computer starts up:
 - [Mac instructions](https://jakehilborn.github.io/debbit/macOS-auto-run)
-- Windows instructions
+- [Windows instructions](https://jakehilborn.github.io/debbit/windows-auto-run)
 
 ## F.A.Q.
 
