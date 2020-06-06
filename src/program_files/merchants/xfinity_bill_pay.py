@@ -58,6 +58,8 @@ Detected first time run captcha. Please follow these one-time steps. Future runs
     driver.find_element_by_xpath("//span[contains(text(),'nding in " + merchant.card[-4:] + "')]").click()
     driver.find_element_by_xpath("//span[contains(text(),'nding in " + merchant.card[-4:] + "')]").click()
     driver.find_element_by_xpath("//button[contains(text(),'Continue')]").click()
+
+    WebDriverWait(driver, 5).until(expected_conditions.presence_of_element_located((By.XPATH, "//button[contains(text(),'Submit Payment')]")))
     driver.find_element_by_xpath("//button[contains(text(),'Submit Payment')]").click()
 
     try:
