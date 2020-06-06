@@ -1,0 +1,13 @@
+If merchant automation is failing, please notify the project maintainer to help get them fixed.
+
+In the failures folder there will be files with timestamps for names. Each timestamp
+will have 4 pieces ending in .txt, .png, .html, and a folder ending in coverage.
+Open the .png file and make sure it doesn’t have your credit card number or password showing.
+Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach
+them there. You can attach one error or all of them, the more errors to inspect the more helpful.
+
+You can try editing the python files directly. Due to how the project is packaged, you probably
+won't be able to add any import statements that aren't already included somewhere in the project.
+If you get a fix working, or need finer grained control, I encourage you to clone the source code from
+https://github.com/jakehilborn/debbit . Please submit a pull request or email any fixes to
+jakehilborn@gmail.com so I can release them to the public.
