@@ -22,18 +22,37 @@ title: Instructions
 
 ## F.A.Q.
 
+#### Where do I sign up for a high interest checking account?
+Visit this [Doctor of Credit](https://www.doctorofcredit.com/high-interest-savings-to-get/#Mega_High-Interest_Nationwide) page. Regional banks will typically offer the best returns. If you can't find a regional bank you qualify for, select a nationwide bank.
+
 #### How do I see how many purchases debbit has made?
 Open the folder `state` and click the file for this month. It will show `purchase_count` for each merchant.
+
+#### Can debbit run in headless mode?
+Edit `config.txt` and set `hide_web_browser: yes`
+
+#### Does my computer have to stay on? What if I reboot my computer? Will rebooting lose monthly progress?
+
+#### How do I check if debbit is running?
+Debbit runs as a foreground application. On Windows it will show as a Command Prompt window in the taskbar. On macOS it will show as a Terminal window in the dock. 
+
+#### Can I add multiple cards?
+Yes, refer to the section [config.txt Example](#configtxt-example) for an example of two debbit cards being used. One named blue_debbit_card, the other named red_debbit_card.
+
+#### Will debbit accidentally spend money?
+No. Debbit ensures that the correct amount is input and the correct payment method is selected before clicking purchase. If the webpage is not as debbit expects, debbit will error-out preemptively and notify you so that debbit avoids spending money. If debbit clicks "purchase" but cannot verify the purchase was successful, it will error out and notify you and not schedule any future purchases. 
+
+#### Does my debbit card need to be the default card on my account?
+No. Debbit automation will always click the payment method specified in config.txt before making a purchase. Whatever payment method is default in your account is irrelevant.
 
 #### Debbit's web automation failed, how do I get it fixed?
 In the failures folder there will be files with timestamps for names. Each timestamp will have 4 pieces ending in `.txt`, `.png`, `.html`, and a folder ending in `coverage`. Open the .png file and make sure it doesn't have your credit card number or password showing. Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there. You can attach one error or all of them, the more errors to inspect the more helpful.
 
 #### Can debbit automate purchases for other websites?
-Yes, please open an issue on GitHub and I'll work with you to get it automated.
+Yes, please open an issue on GitHub and I'll work with you to get it automated. Alternatively, download the source code and refer to [example_merchant.py](https://github.com/jakehilborn/debbit/blob/master/src/program_files/merchants/example_merchant.py) as a reference to code your own.
 
 #### What is debbit's homepage?
 https://github.com/jakehilborn/debbit
-
 
 ## config.txt Explanation
 
