@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Debbit Instructions
+title: Instructions
 ---
 
 ## Getting Started
