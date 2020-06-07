@@ -29,7 +29,7 @@ When dependencies are updated, and on first-time setup, you'll need to run the f
 pipenv install
 ```
 
-## Every Time: run debbit via pipenv
+## very Time: run debbit via pipenv
 
 `pipenv run python debbit.py`
 
