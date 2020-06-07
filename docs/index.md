@@ -29,30 +29,43 @@ Visit this [Doctor of Credit](https://www.doctorofcredit.com/high-interest-savin
 Open the folder `state` and click the file for this month. It will show `purchase_count` for each merchant.
 
 #### Can debbit run in headless mode?
-Edit `config.txt` and set `hide_web_browser: yes`
+Yes. Edit `config.txt` and set `hide_web_browser: yes`
 
-#### Does my computer have to stay on? What if I reboot my computer? Will rebooting lose monthly progress?
+#### Does my computer have to stay on?
+No, you do not need to leave your computer on all the time. Debbit works in two different ways based on what's in config.txt.
+
+`mode: burst`
+Best if using a laptop or a computer that is not always on. Debbit will check every 5 minutes if enough time has elapsed such that it should execute purchases. This allows you to sleep your computer without concern for debbit. Whenever your computer is back on, debbit will check if it is time to execute purchases and do so accordingly.
+
+`mode: spread`
+Best if running on a server/computer that never sleeps. Debbit will spread out purchases through the month as evenly as possible (with some randomness).
+
+#### What if I reboot my computer?
+Rebooting will cause no issues, other than you'll need to run debbit again after starting up. Follow these instructions for [macOS](https://jakehilborn.github.io/debbit/macOS-auto-run) or [Windows](https://jakehilborn.github.io/debbit/windows-auto-run) to automatically run on start up.
+
+#### Will rebooting lose monthly progress?
+No. Debbit stores its progress through the month in files inside the `state` folder. You can stop/start debbit whenever and reboot whenever without concern for debbit. It is built to handle all these scenarios.
 
 #### How do I check if debbit is running?
-Debbit runs as a foreground application. On Windows it will show as a Command Prompt window in the taskbar. On macOS it will show as a Terminal window in the dock. 
+Debbit runs as a foreground application. On Windows it will show as a Command Prompt window in the taskbar. On macOS it will show as a Terminal window in the dock. If debbit fails to execute a purchase after 5 retries, an email will be sent to the email address in `config.txt` as a notification. 
 
-#### Can I add multiple cards?
-Yes, refer to the section [config.txt Example](#configtxt-example) for an example of two debbit cards being used. One named blue_debbit_card, the other named red_debbit_card.
+#### Can debbit use multiple cards?
+Yes, refer to the section [config.txt Example](#configtxt-example) for an example of two debit cards being used. One named blue_debbit_card, the other named red_debbit_card.
 
 #### Will debbit accidentally spend money?
-No. Debbit ensures that the correct amount is input and the correct payment method is selected before clicking purchase. If the webpage is not as debbit expects, debbit will error-out preemptively and notify you so that debbit avoids spending money. If debbit clicks "purchase" but cannot verify the purchase was successful, it will error out and notify you and not schedule any future purchases. 
+No. Debbit ensures that the correct amount is input and the correct payment method is selected before clicking purchase. If the webpage is not exactly as debbit expects, debbit will error-out preemptively and notify you so that debbit avoids spending money. If debbit clicks "purchase" but cannot verify the purchase was successful, it will error out and notify you and not schedule any future purchases until you re-run debbit. 
 
-#### Does my debbit card need to be the default card on my account?
+#### Does my debit card need to be the default card on my account?
 No. Debbit automation will always click the payment method specified in config.txt before making a purchase. Whatever payment method is default in your account is irrelevant.
 
 #### Debbit's web automation failed, how do I get it fixed?
-In the failures folder there will be files with timestamps for names. Each timestamp will have 4 pieces ending in `.txt`, `.png`, `.html`, and a folder ending in `coverage`. Open the .png file and make sure it doesn't have your credit card number or password showing. Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there. You can attach one error or all of them, the more errors to inspect the more helpful.
+In the `failures` folder there will be files with timestamps for names. Each timestamp will have 4 pieces ending in `.txt`, `.png`, `.html`, and a folder ending in `coverage`. Open the .png file and make sure it doesn't have your credit card number or password showing. Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there. You can attach one error or all of them, the more errors to inspect the more helpful.
 
 #### Can debbit automate purchases for other websites?
 Yes, please open an issue on GitHub and I'll work with you to get it automated. Alternatively, download the source code and refer to [example_merchant.py](https://github.com/jakehilborn/debbit/blob/master/src/program_files/merchants/example_merchant.py) as a reference to code your own.
 
 #### What is debbit's homepage?
-https://github.com/jakehilborn/debbit
+[https://github.com/jakehilborn/debbit](https://github.com/jakehilborn/debbit)
 
 ## config.txt Explanation
 
