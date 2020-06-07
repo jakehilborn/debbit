@@ -136,12 +136,15 @@ def get_burst_min_gap(merchant, cur_purchase_count, now):
     if merchant.burst_min_gap is not None:  # Use value in config file
         return merchant.burst_min_gap
 
+    remaining_purchase_count = merchant.total_purchases - cur_purchase_count
+    default_burst_min_gap = 79200  # 22 hours
+
+    if remaining_purchase_count < 1:
+        return default_burst_min_gap
+
     month_end_day = merchant.max_day or DAYS_IN_MONTH[now.month] - 1
     remaining_secs_in_month = (datetime(now.year, now.month, month_end_day) - now).total_seconds()
-    remaining_purchase_count = merchant.total_purchases - cur_purchase_count
-
     dynamic_burst_min_gap = int(remaining_secs_in_month / 4 / remaining_purchase_count * merchant.burst_count)
-    default_burst_min_gap = 79200  # 22 hours
 
     return min(dynamic_burst_min_gap, default_burst_min_gap)
 
