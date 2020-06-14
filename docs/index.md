@@ -77,8 +77,8 @@ mode: burst
 # Set to "yes" to run web automation invisibly in the background, aka headless mode.
 hide_web_browser: no
 
-# Optional. If debbit is unable to complete a purchase
-# after 5 tries you'll be notified via email.
+# Optional. If debbit is unable to complete a purchase after 5 tries
+# you'll be notified via an email from debbit.failure@debbit.com
 notify_failure: your.email@website.com
 
 # You can put any name for the debit card here.

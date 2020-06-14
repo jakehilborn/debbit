@@ -382,10 +382,11 @@ def notify_failure(exit_msg):
         '<br><br>'
         '<strong>This debbit failure was only sent to you.</strong> To help get this issue fixed, please consider '
         'sharing this error with the debbit developers. In the failures folder there are files with timestamps for '
-        'names. Each timestamp has 3 files ending in .txt, .png, and .html. Open the .png file and make sure it does '
-        'not have your credit card number or password showing. Then, email these three files (or the whole failure '
-        'folder) to jakehilborn@gmail.com or open an "Issue" at https://github.com/jakehilborn/debbit and attach '
-        'them there.').format(exit_msg=exit_msg)
+        'names. Each timestamp has 3 files ending in .txt, .png, .html, and a folder ending in _coverage. Open the '
+        '.png file and make sure it does not have your credit card number or password showing. Then, email these files '
+        'to jakehilborn@gmail.com or open an "Issue" at https://github.com/jakehilborn/debbit/issues and attach them '
+        'there. You can send one error or the whole failures folder, the more errors to inspect the more helpful.')\
+        .format(exit_msg=exit_msg)
 
     d = [b'U0cueDBSVmZZeVFRRHVHRHpY',
          b'WkRsQk4xaGtaeTVYZEhOcFdsWnpRM1ZS',
