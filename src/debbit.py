@@ -640,14 +640,3 @@ if __name__ == '__main__':
             sys.exit(1)
 
     main()
-
-'''
-TODO
-
-Unit test suite
-Amazon captcha support
-Check for internet connection post wake-up before bursting
-Propagate error details to failures/ files when returning Result.failure
-Result.unverified should record details to failures/ directory
-Use a class for State to improve readability
-'''
