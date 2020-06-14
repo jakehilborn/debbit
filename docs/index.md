@@ -58,7 +58,7 @@ No. Debbit ensures that the correct amount is input and the correct payment meth
 #### Does my debit card need to be the default card on my account?
 No. Debbit automation will always click the payment method specified in config.txt before making a purchase. Whatever payment method is default in your account is irrelevant.
 
-#### Debbit's web automation failed, how do I get it fixed?
+#### Merchant automation failed, how do I get it fixed?
 In the `failures` folder there will be files with timestamps for names. Each timestamp will have 4 pieces ending in `.txt`, `.png`, `.html`, and a folder ending in `coverage`. Open the .png file and make sure it doesn't have your credit card number or password showing. Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there. You can attach one error or all of them, the more errors to inspect the more helpful.
 
 #### Can debbit automate purchases for other websites?

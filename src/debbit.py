@@ -312,7 +312,7 @@ def web_automation_wrapper(merchant):
                 time.sleep(60 * failures ** 4)  # try again in 1min, 16min, 1.3hr, 4.3hr, 10.4hr
                 continue
             else:
-                exit_msg = merchant.id + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
+                exit_msg = merchant.id + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again. To help get this issue fixed, follow instructions at https://jakehilborn.github.io/debbit/#merchant-automation-failed-how-do-i-get-it-fixed'
                 LOGGER.error(exit_msg)
                 notify_failure(exit_msg)
                 raise Exception(exit_msg)  # exits this merchant's thread, not entire program
@@ -320,7 +320,7 @@ def web_automation_wrapper(merchant):
         if result == Result.unverified:
             record_failure(driver, merchant, 'Result.unverified', cov)
             close_webdriver(driver, merchant)
-            exit_msg = 'Unable to verify ' + merchant.id + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
+            exit_msg = 'Unable to verify ' + merchant.id + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again. To help get this issue fixed, follow instructions at https://jakehilborn.github.io/debbit/#merchant-automation-failed-how-do-i-get-it-fixed'
             LOGGER.error(exit_msg)
             notify_failure(exit_msg)
             sys.exit(1)  # exits this merchant's thread, not entire program
