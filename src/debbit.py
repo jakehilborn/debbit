@@ -633,7 +633,7 @@ if __name__ == '__main__':
         try:
             CONFIG = yaml.safe_load(config_f.read())
         except yaml.YAMLError as yaml_e:
-            config_error_msg = '\n\nFormatting error in ' + config_to_open + '. Ensure ' + config_to_open + ' has the same structure and spacing as the examples in INSTRUCTIONS.txt.'
+            config_error_msg = '\n\nFormatting error in ' + config_to_open + '. Ensure ' + config_to_open + ' has the same structure and spacing as the examples at https://jakehilborn.github.io/debbit/'
             if hasattr(yaml_e, 'problem_mark'):
                 config_error_msg += '\n\n' + str(yaml_e.problem_mark)
             LOGGER.error(config_error_msg)
