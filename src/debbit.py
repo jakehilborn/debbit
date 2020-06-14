@@ -62,6 +62,8 @@ def load_state(year, month):
 def load_merchant(card, merchant_name, merchant_conf):
     try:
         web_automation = __import__('program_files.merchants.' + merchant_name, fromlist=["*"]).web_automation
+    except (KeyboardInterrupt, SystemExit):
+        raise
     except Exception as e:
         LOGGER.error('Error loading ' + merchant_name + '.py from merchants folder')
         raise e
@@ -402,6 +404,8 @@ def notify_failure(exit_msg):
         html_content=html_content)
     try:
         SendGridAPIClient(o).send(message)
+    except (KeyboardInterrupt, SystemExit):
+        raise
     except Exception as e:
         LOGGER.error('Unable to send failure notification email')
         LOGGER.error(e.message)
@@ -470,6 +474,8 @@ def restore_cookies(driver, merchant_id):
                 return
             time.sleep(0.1)
         error_msg = 'Unable to restore cookies after ' + str(seconds) + ' seconds'
+    except (KeyboardInterrupt, SystemExit):
+        raise
     except Exception as e:
         error_msg = str(e)
 
