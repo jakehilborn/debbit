@@ -1,7 +1,5 @@
-# Confused? Open up INSTRUCTIONS.txt and check out these sections:
-# Config.txt Explanation - what each config option does
-# Config.txt Example - shows structure of config.txt for multiple merchants and/or multiple cards"
-# Config.txt Merchant Info - important config restrictions some merchants have
+# Copy and rename this file to config.txt or config.yml
+# Confused? Read instructions at https://jakehilborn.github.io/debbit/
 
 mode: burst
 hide_web_browser: no
