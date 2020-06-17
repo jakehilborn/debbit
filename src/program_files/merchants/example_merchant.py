@@ -10,7 +10,6 @@ import utils
 from result import Result
 
 LOGGER = logging.getLogger('debbit')
-TESTVAR = 'abc'
 
 '''
 How to add a new merchant module to debbit
@@ -26,8 +25,6 @@ For more complex scenarios, please refer to the other merchant .py files.
 
 def web_automation(driver, merchant, amount):
     driver.get('https://jakehilborn.github.io/debbit/example-merchant/login.html')
-
-    return Result.unverified
 
     logged_in = utils.is_logged_in(driver, timeout=90,
        logged_out_element=(By.ID, 'password'),
