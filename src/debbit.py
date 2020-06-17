@@ -9,6 +9,9 @@ import traceback
 import urllib.request
 from datetime import datetime
 from datetime import timedelta
+from email.mime.multipart import MIMEMultipart
+import smtplib
+from email.mime.text import MIMEText
 from threading import Timer, Lock, Thread
 import coverage
 
@@ -356,7 +359,8 @@ def record_failure(driver, merchant, error_msg, cov):
         LOGGER.error('record_failure DOM error: ' + traceback.format_exc())
 
     try:
-        cov.html_report(directory=absolute_path(filename + '_' + 'coverage'), include='*/merchants/*')
+        if cov:  # cov is None when a debugger is attached
+            cov.html_report(directory=absolute_path(filename + '_' + 'coverage'), include='*/merchants/*')
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception:
@@ -378,6 +382,9 @@ def notify_failure(exit_msg):
     if not CONFIG.get('notify_failure') or CONFIG['notify_failure'] == 'your.email@website.com':
         return
 
+    from_email = 'debbit.failure@debbit.com'
+    to_email = CONFIG['notify_failure']
+    subject = 'Debbit Failure'
     html_content = ('{exit_msg}'
         '<br><br>'
         '<strong>This debbit failure was only sent to you.</strong> To help get this issue fixed, please consider '
@@ -399,17 +406,40 @@ def notify_failure(exit_msg):
         o += s.decode('utf-8')
 
     message = Mail(
-        from_email='debbit.failure@debbit.com',
-        to_emails=CONFIG['notify_failure'],
-        subject='Debbit Failure',
+        from_email=from_email,
+        to_emails=to_email,
+        subject=subject,
         html_content=html_content)
     try:
         SendGridAPIClient(o).send(message)
+        return
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as e:
-        LOGGER.error('Unable to send failure notification email')
-        LOGGER.error(e.message)
+        LOGGER.error('Unable to send failure notification email - trying again via SMTP')
+        if hasattr(e, 'message'):  # SendGrid error
+            LOGGER.error(e.message)
+        else:  # other error
+            LOGGER.error(e)
+
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(html_content))
+
+    try:
+        server = smtplib.SMTP_SSL('smtp.sendgrid.net', 465)
+        server.ehlo()
+        server.login('apikey', o)
+        server.sendmail(from_email, to_email, msg.as_string())
+        server.close()
+        LOGGER.info('Successfully sent failure notification email via SMTP')
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception as e:
+        LOGGER.error('Unable to send failure notification email via SMTP')
+        LOGGER.error(e)
 
 
 def get_webdriver(merchant):
@@ -542,6 +572,17 @@ def update_check():
     return
 
 
+def pyinstaller_patches():
+    if not getattr(sys, 'frozen', False):
+        return  # only apply runtime patches if this is a Pyinstaller binary
+
+    # workaround so PyInstaller can dynamically load program_files/merchants/*.py
+    sys.path.insert(0, absolute_path())
+
+    # force Coverage to look for assets in program_files directory. For version TODO, updates will likely break this
+    __import__('coverage.html', fromlist=["*"]).STATIC_PATH = [absolute_path('program_files', 'coverage-htmlfiles')]
+
+
 class Coverage:
     def __init__(self):
         if sys.gettrace():
@@ -601,8 +642,7 @@ if __name__ == '__main__':
     file_handler.setFormatter(logging.Formatter(log_format))
     LOGGER.addHandler(file_handler)
 
-    # workaround so PyInstaller can dynamically load program_files/merchants/*.py
-    sys.path.insert(0, absolute_path())
+    pyinstaller_patches()
 
     # configure global constants
     STATE_WRITE_LOCK = Lock()
