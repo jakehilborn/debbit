@@ -3,6 +3,7 @@ import base64
 import logging
 import os
 import random
+import smtplib
 import sys
 import time
 import traceback
@@ -10,11 +11,10 @@ import urllib.request
 from datetime import datetime
 from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
-import smtplib
 from email.mime.text import MIMEText
 from threading import Timer, Lock, Thread
-import coverage
 
+import coverage
 import yaml  # PyYAML
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException
@@ -579,7 +579,8 @@ def pyinstaller_patches():
     # workaround so PyInstaller can dynamically load program_files/merchants/*.py
     sys.path.insert(0, absolute_path())
 
-    # force Coverage to look for assets in program_files directory. For version TODO, updates will likely break this
+    # force Coverage to look for assets in program_files directory.
+    # This nasty patch is for coverage v5.1 and may break if the dependency is updated.
     __import__('coverage.html', fromlist=["*"]).STATIC_PATH = [absolute_path('program_files', 'coverage-htmlfiles')]
 
 

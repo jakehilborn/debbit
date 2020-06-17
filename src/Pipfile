@@ -9,7 +9,7 @@ verify_ssl = true
 pyyaml = "*"
 selenium = "*"
 sendgrid = "*"
-coverage = "*"
+coverage = "==5.1"  # Refer to debbit.py pyinstaller_patches() for why this is pinned
 
 [requires]
-python_version = "3"
+python_version = "3"  # Only tested with Python 3.7
