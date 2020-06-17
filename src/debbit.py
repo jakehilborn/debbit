@@ -426,7 +426,7 @@ def notify_failure(exit_msg):
     msg['From'] = from_email
     msg['To'] = to_email
     msg['Subject'] = subject
-    msg.attach(MIMEText(html_content))
+    msg.attach(MIMEText(html_content, "html"))
 
     try:
         server = smtplib.SMTP_SSL('smtp.sendgrid.net', 465)
