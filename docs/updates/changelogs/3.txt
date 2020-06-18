@@ -1,4 +1,12 @@
 debbit 2.0
 
-- more test
-- info here
+New Features:
+- Support for multiple debbit/credit cards.
+- Cookie support. Firefox stays logged in to avoid captchas.
+- Email notifications for when debbit fails.
+- Instructions to auto-run debbit on computer start up.
+- Plug-in support for adding new merchants.
+
+New Merchants:
+- AT&T Bill Pay
+- Optimum Bill Pay
