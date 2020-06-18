@@ -25,6 +25,9 @@ title: Instructions
 #### Where do I sign up for a high interest checking account?
 Visit this [Doctor of Credit](https://www.doctorofcredit.com/high-interest-savings-to-get/#Mega_High-Interest_Nationwide) page. Regional banks will typically offer the best returns. If you can't find a regional bank you qualify for, select a nationwide bank.
 
+#### How do I upgrade from debbit 1.0 / 1.0.1 to debbit 2.0?
+If you have not made any purchases with debbit 2.0 yet (example_merchant purchases are okay), follow [this guide](https://jakehilborn.github.io/debbit/v1-to-v2).
+
 #### How do I see how many purchases debbit has made?
 Open the folder `state` and click the file for this month. It will show `purchase_count` for each merchant.
 
