@@ -10,7 +10,7 @@ title: Instructions
 1. Download [debbit](https://github.com/jakehilborn/debbit/releases) if you haven't done so yet, then unzip the download.
 
 1. Run debbit to see a (fake) example purchase, refer to your operating system:  
-- Mac: Double click on `debbit`. If using Catalina, to run for the first time right click on `debbit`, click Open, and then click the Open button.  
+- macOS: Double click on `debbit`. If using Catalina, to run for the first time right click on `debbit`, click Open, and then click the Open button. If you still see the error "debbit is damaged", read the bit about macOS catalina on the [releases](https://github.com/jakehilborn/debbit/releases) page for how to bypass this.  
 - Windows: Double click on `debbit_keep_window_open.bat`  
 - Linux: [Instructions here](https://github.com/jakehilborn/debbit/blob/master/src/HOW_TO_RUN_FROM_SOURCE.md)
 
