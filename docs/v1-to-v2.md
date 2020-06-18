@@ -77,3 +77,11 @@ example_card_description_xfinity_bill_pay:
     human_time: 2020-06-17 09:21PM
     unix_time: 1592454103
 {% endhighlight %}
+
+{:start="7"}
+1. Run debbit 2.0, it should print out the purchases migrated over from debbit 1.0.
+
+```
+1 example_card_description_amazon_gift_card_reload purchase complete for June 2020
+1 example_card_description_xfinity_bill_pay purchase complete for June 2020
+```
