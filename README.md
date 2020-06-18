@@ -14,6 +14,8 @@
 ### Debbit currently supports
 - Amazon gift card reloads
 - Xfinity bill pay
+- AT&T bill pay
+- Optimum bill bay
 - More to come... Please open a GitHub issue with requests for new merchants/bills to support.
 
 ### Features
