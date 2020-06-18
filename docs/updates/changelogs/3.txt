@@ -1,5 +1,5 @@
 Debbit 2.0 New Features:
-- Support for multiple debbit/credit cards.
+- Support for multiple debit/credit cards.
 - Cookie support. Firefox stays logged in to avoid captchas.
 - Email notifications for when debbit fails.
 - Instructions to auto-run debbit on computer start up.

@@ -7,7 +7,7 @@ title: v1 to v2
 
 If you're upgrading from debbit v1.0 or v1.0.1 and would like to keep this current month's progress, follow the instructions below. If you are using debbit 2.0 for the first time or do not have any transactions yet this month, skip this.
 
-1. Open `config.txt` in the debbit 2.0 folder and input your merchant details. Here is an example showcasing amazon and xfinity. If you're using both, copy both. If you're just using one, copy just that one. Set all of the values that you were previously using in debbit 1.0. You can change `example_card_description` to any description of the debbit card you were using with debbit 1.0.
+1. Open `config.txt` in the debbit 2.0 folder and input your merchant details. Here is an example showcasing amazon and xfinity. If you're using both, copy both. If you're just using one, copy just that one. Set all of the values that you were previously using in debbit 1.0. You can change `example_card_description` to any description of the debit card you were using with debbit 1.0.
 
 {% highlight yaml%}
 # Confused? Read instructions at https://jakehilborn.github.io/debbit/
