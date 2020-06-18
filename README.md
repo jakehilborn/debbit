@@ -24,5 +24,8 @@
 - **Built in support**: If amazon/xfinity/etc changes their website and Debbit stops working, it will generate error logs to describe the issue. All passwords & cc details are automatically removed from the logs. There is no built-in error uploads so you'll have to email the files or create an Issue on GitHub to share.
 - **Private**: There are no analytics or anything uploading data anywhere.
 
+### FAQ:
+https://jakehilborn.github.io/debbit/#faq
+
 ### Feedback:
 Please create a GitHub Issue for any feedback, feature requests, merchant requests bugs, etc. Happy to accept pull requests too!
