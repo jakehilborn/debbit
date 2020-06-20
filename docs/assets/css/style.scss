@@ -18,7 +18,9 @@
   100% { transform: rotate(360deg); }
 }
 
-.ascii-art {
-    font-family: monospace;
-    white-space: pre;
+.header-img {
+  border-radius: 0.5rem;
+  max-width: 100%;
+  max-height: 12rem;
+  height: auto;
 }
