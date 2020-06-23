@@ -7,7 +7,7 @@
 
 [macOS and Windows](https://github.com/jakehilborn/debbit/releases). Or, clone the source and run debbit.py.
 
-### Why?
+### Description
 
 Debbit is a set it and forget it solution to automating monthly transaction count requirements. Debbit does this by purchasing 50 cent Amazon gift cards and/or paying your cable bill in small increments multiple times throughout the month.
 
