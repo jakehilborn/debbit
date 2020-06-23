@@ -1,11 +1,7 @@
-<a href="https://i.imgur.com/6TQjwsI.mp4"><img align="right" src="debbit_preview.png"></a>
-
-# debbit
-**Click image for gif demo [👉](https://i.imgur.com/6TQjwsI.mp4)**
-
-### Download
-
-[macOS and Windows](https://github.com/jakehilborn/debbit/releases). Or, clone the source and run debbit.py.
+---
+layout: default
+title: About
+---
 
 ### Description
 
@@ -16,6 +12,16 @@ Debbit is a set it and forget it solution to automate monthly transaction count 
 * [Prevent credit card closures from inactivity](https://www.doctorofcredit.com/which-banks-close-credit-cards-for-inactivity/) - Banks will close out credit cards due to inactivity. Use Debbit to automatically schedule 1 tiny transaction per month for all your sock drawer credit cards.
 
 * [Get $.99 per card per month for free](https://www.doctorofcredit.com/small-balance-waiver-a-k-a-lots-of-free-99-cent-amazon-gcs/) - Many (most?) banks will waive your credit card bill if your balance is less than $1. Use Debbit to schedule one $.99 Amazon gift card reload per month for all your sock drawer credit cards.
+
+### Download
+
+[macOS and Windows](https://github.com/jakehilborn/debbit/releases). Or, clone the source and run debbit.py.
+
+### Click to see gif demo of Debbit 👇
+
+<video controls loop class="embeded-video">
+  <source src="https://i.imgur.com/6TQjwsI.mp4" type="video/mp4">
+</video>
 
 ### Debbit currently supports
 - Amazon gift card reloads
