@@ -1,6 +1,6 @@
 <a href="https://i.imgur.com/6TQjwsI.mp4"><img align="right" src="debbit_preview.png"></a>
 
-# debbit
+# Debbit
 **Click image for gif demo [👉](https://i.imgur.com/6TQjwsI.mp4)**
 
 ### Download
@@ -30,8 +30,8 @@ Debbit is a set it and forget it solution to automate monthly transaction count 
 - **Built in support**: If amazon/xfinity/etc changes their website and Debbit stops working, it will generate error logs to describe the issue. All passwords & cc details are automatically removed from the logs. There is no built-in error uploads so you'll have to email the files or create an Issue on GitHub to share.
 - **Private**: There are no analytics or anything uploading data anywhere.
 
-### FAQ:
+### FAQ
 [https://jakehilborn.github.io/debbit/#faq](https://jakehilborn.github.io/debbit/#faq)
 
-### Feedback:
+### Feedback
 Please create a GitHub Issue for any feedback, feature requests, merchant requests bugs, etc. Happy to accept pull requests too!
