@@ -9,7 +9,7 @@
 
 ### Description
 
-Debbit is a set it and forget it solution to automating monthly transaction count requirements. Debbit does this by purchasing 50 cent Amazon gift cards and/or paying your cable bill in small increments multiple times throughout the month.
+Debbit is a set it and forget it solution to automate monthly transaction count requirements. Debbit does this by purchasing 50 cent Amazon gift cards and/or paying your cable bill in small increments multiple times throughout the month.
 
 * [High interest checking accounts](https://www.doctorofcredit.com/high-interest-savings-to-get/#Mega_High-Interest_Nationwide) offer up to a 5% return on your account balance. To qualify for these high returns, you'll typically need to make 10 to 50 debit card transactions per month depending on each bank's requirements. Debbit can automate as many transactions per month as you need.
 
