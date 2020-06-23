@@ -13,10 +13,9 @@ Debbit is a set it and forget it solution to automate monthly transaction count 
 
 * [High interest checking accounts](https://www.doctorofcredit.com/high-interest-savings-to-get/#Mega_High-Interest_Nationwide) offer up to a 5% return on your account balance. To qualify for these high returns, you'll typically need to make 10 to 50 debit card transactions per month depending on each bank's requirements. Debbit can automate as many transactions per month as you need.
 
-* [Prevent credit card closures from inactivity](https://www.doctorofcredit.com/which-banks-close-credit-cards-for-inactivity/)
-Banks will close out credit cards due to inactivity. Use Debbit to automatically schedule 1 tiny transaction per month for all your sock drawer credit cards.
+* [Prevent credit card closures from inactivity](https://www.doctorofcredit.com/which-banks-close-credit-cards-for-inactivity/) - Banks will close out credit cards due to inactivity. Use Debbit to automatically schedule 1 tiny transaction per month for all your sock drawer credit cards.
 
-* [Get $.99 per card per month for free](https://www.doctorofcredit.com/small-balance-waiver-a-k-a-lots-of-free-99-cent-amazon-gcs/) Many (most?) banks will waive your credit card bill if your balance is less than $1. Use Debbit to schedule one $.99 Amazon gift card reload per month for all your sock drawer credit cards.
+* [Get $.99 per card per month for free](https://www.doctorofcredit.com/small-balance-waiver-a-k-a-lots-of-free-99-cent-amazon-gcs/) - Many (most?) banks will waive your credit card bill if your balance is less than $1. Use Debbit to schedule one $.99 Amazon gift card reload per month for all your sock drawer credit cards.
 
 ### Debbit currently supports
 - Amazon gift card reloads
