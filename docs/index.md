@@ -10,9 +10,12 @@ title: Instructions
 1. Download [debbit](https://github.com/jakehilborn/debbit/releases) if you haven't done so yet, then unzip the download.
 
 1. Run debbit to see a (fake) example purchase, refer to your operating system:  
-- macOS: Double click on `debbit`. If using Catalina, to run for the first time right click on `debbit`, click Open, and then click the Open button. If you still see the error "debbit is damaged", read the bit about macOS catalina on the [releases](https://github.com/jakehilborn/debbit/releases) page for how to bypass this.  
-- Windows: Double click on `debbit_keep_window_open.bat`. On the first run you may see a Defender SmartScreen pop-up. If so, click `More info` and then `Run anyway`. If you get a pop-up about your Firewall, click Cancel since Debbit does not need Firewall access."  
-- Linux: [Instructions here](https://github.com/jakehilborn/debbit/blob/master/src/HOW_TO_RUN_FROM_SOURCE.md)
+
+* **macOS**: Double click on `debbit`. If using Catalina, to run for the first time right click on `debbit`, click Open, and then click the Open button. If you still see the error "debbit is damaged", read the bit about macOS catalina on the [releases](https://github.com/jakehilborn/debbit/releases) page for how to bypass this.
+
+* **Windows**: Double click on `debbit_keep_window_open.bat`. On the first run you may see a Defender SmartScreen pop-up. If so, click `More info` and then `Run anyway`. If you get a pop-up about your Firewall, click Cancel since Debbit does not need Firewall access.
+
+* **Linux**: [Instructions here](https://github.com/jakehilborn/debbit/blob/master/src/HOW_TO_RUN_FROM_SOURCE.md)
 
 1. To make debbit work for real, edit the file config.txt. Refer to [config.txt Explanation](#configtxt-explanation) for info. **Important**: config.txt must have the correct structure (spaces, `:`'s, etc.), [config.txt Example](#configtxt-example) is a good resource to copy/paste and then edit the bits you need.
 
