@@ -446,11 +446,18 @@ def get_webdriver(merchant):
     WEB_DRIVER_LOCK.acquire()  # Only execute one purchase at a time so the console log messages don't inter mix
     options = Options()
     options.headless = CONFIG['hide_web_browser']
+    profile = webdriver.FirefoxProfile(absolute_path('program_files', 'selenium-cookies-extension', 'firefox-profile'))
+
+    # Prevent websites from detecting Selenium via evaluating `if (window.navigator.webdriver == true)` with JavaScript
+    profile.set_preference("dom.webdriver.enabled", False)
+    profile.set_preference('useAutomationExtension', False)
+
     try:
         driver = webdriver.Firefox(options=options,
                                  service_log_path=os.devnull,
                                  executable_path=absolute_path('program_files', 'geckodriver'),
-                                 firefox_profile=absolute_path('program_files', 'selenium-cookies-extension', 'firefox-profile'))
+                                 firefox_profile=profile)
+
     except SessionNotCreatedException:
         LOGGER.error('')
         LOGGER.error('Firefox not found. Please install the latest version of Firefox and try again.')
