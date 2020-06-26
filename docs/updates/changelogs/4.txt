@@ -1,0 +1,3 @@
+Debbit 2.0.1 Bug Fixes:
+- Fix xfinity_bill_pay "password was incorrect" error.
+- Fix memory leak caused by geckodriver not being properly quit.
