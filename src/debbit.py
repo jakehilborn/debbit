@@ -480,7 +480,7 @@ def close_webdriver(driver, merchant):
         LOGGER.error(str(e) + ' - proceeding without persisting cookies')
 
     try:
-        driver.close()
+        driver.quit()
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception:
