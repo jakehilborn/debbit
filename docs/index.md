@@ -56,7 +56,7 @@ No. Debbit stores its progress through the month in files inside the `state` fol
 Debbit runs as a foreground application. On Windows it will show as a Command Prompt window in the taskbar. On macOS it will show as a Terminal window in the dock. If debbit fails to execute a purchase after 5 retries, an email will be sent to the email address in `config.txt` as a notification. 
 
 #### Can debbit use multiple cards?
-Yes, refer to the section [config.txt Example](#configtxt-example) for an example of two debit cards being used. One named blue_debbit_card, the other named red_debbit_card.
+Yes, refer to the section [config.txt Example](#configtxt-example) for an example of two debit cards being used. One named blue_debbit_card, the other named red_debbit_card. Debbit supports an unlimited number of cards in config.txt.
 
 #### Will debbit accidentally spend money?
 No. Debbit ensures that the correct amount is input and the correct payment method is selected before clicking purchase. If the webpage is not exactly as debbit expects, debbit will error-out preemptively and notify you so that debbit avoids spending money. If debbit clicks "purchase" but cannot verify the purchase was successful, it will error out and notify you and not schedule any future purchases until you re-run debbit. 
