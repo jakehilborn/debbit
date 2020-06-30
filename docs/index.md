@@ -25,6 +25,9 @@ title: Instructions
 
 ## F.A.Q.
 
+#### What is Debbit?
+Read about Debbit [here](https://jakehilborn.github.io/debbit/about).
+
 #### Where do I sign up for a high interest checking account?
 Visit this [Doctor of Credit](https://www.doctorofcredit.com/high-interest-savings-to-get/#Mega_High-Interest_Nationwide) page. Regional banks will typically offer the best returns. If you can't find a regional bank you qualify for, select a nationwide bank.
 
