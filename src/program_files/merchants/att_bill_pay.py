@@ -21,44 +21,64 @@ def web_automation(driver, merchant, amount):
 
     # Wait until login screen, promotion pop-up, or account dashboard shows.
     WebDriverWait(driver, 120).until(utils.AnyExpectedCondition(
-        expected_conditions.element_to_be_clickable((By.ID, "password")),
+        expected_conditions.element_to_be_clickable((By.NAME, "password")),
         expected_conditions.element_to_be_clickable((By.XPATH, "//img[contains(@src,'btnNoThanks')]")),
         expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]")),
     ))
 
-    if not driver.find_elements_by_id('password'):  # password field found, need to log in
+    if driver.find_elements_by_name('password'):  # password field found, need to log in
         try:
-            driver.find_element_by_id('userName').send_keys(merchant.usr)
-        except common.exceptions.ElementNotInteractableException:
-            pass
-        try:
-            driver.find_element_by_xpath("//a[@value='" + merchant.usr + "']").click()
+            driver.find_element_by_id('userID').send_keys(merchant.usr)
         except common.exceptions.NoSuchElementException:
             pass
 
-        driver.find_element_by_id('password').send_keys(merchant.psw)
-        driver.find_element_by_xpath("//button[contains(@id,'loginButton')]").click()
+        driver.find_element_by_name('password').send_keys(merchant.psw)
+        driver.find_element_by_xpath("//button[contains(text(),'Sign in')]").click()
 
         # Wait for potential promotions screen, regular account overview, or OTP flow
         WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
             expected_conditions.element_to_be_clickable((By.XPATH, "//img[contains(@src,'btnNoThanks')]")),
             expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]")),
-            expected_conditions.element_to_be_clickable((By.NAME, "Send code"))
+            expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(@id,'ancel')]"))  # SMS code flow has clickable cancel button
         ))
 
-        try:  # OTP text validation
-            driver.find_element_by_name("Send code").click()
-            WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, "verificationCodeInput")))
-            sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'We sent it to')]").text.strip()
-            LOGGER.info(sent_to_text)
-            LOGGER.info('Enter OTP here: ')
-            otp = input()
+        if driver.find_elements_by_id('submitDest'):  # MFA flow
+            LOGGER.info('One time multi-factor auth required. This will not happen after the first debbit run.')
+            try:
+                multi_mfa_options = False
+                try:
+                    WebDriverWait(driver, 0).until(expected_conditions.element_to_be_clickable((By.ID, "submitDest")))
+                except TimeoutException:  # The Send code button is not clickable. This means there are multiple MFA options. Ask user which one to use.
+                    multi_mfa_options = True
 
-            elem = driver.find_element_by_id("verificationCodeInput")
-            elem.send_keys(otp)
-            elem.send_keys(Keys.ENTER)
-        except common.exceptions.NoSuchElementException:
-            pass
+                if multi_mfa_options:
+                    mfa_options = {}
+                    for i in range(1, 10):
+                        if driver.find_elements_by_id('m' + str(i) + 'label'):
+                            mfa_options[i] = driver.find_element_by_id('m' + str(i) + 'label').text
+                    LOGGER.info('')
+                    LOGGER.info('Choose a multi-factor authentication option.')
+                    for k, v in mfa_options.items():
+                        LOGGER.info('    ' + str(k) + ' - ' + v)
+                    LOGGER.info('Type a number 1-9 and then hit enter: ')
+                    user_mfa_choice_input = input()
+                    user_mfa_choice_index = ''.join([c for c in user_mfa_choice_input if c.isdigit()])  # sanitize input to remove all non digit characters
+                    driver.find_element_by_id('m' + user_mfa_choice_index + 'label').click()
+
+                driver.find_element_by_id("submitDest").click()
+                WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, "codeValue")))
+                sent_to_text = driver.find_element_by_xpath("//*[contains(text(),'We sent it to')]").text.strip()
+                LOGGER.info(sent_to_text)
+                LOGGER.info('Enter OTP here: ')
+                otp = input()
+
+                elem = driver.find_element_by_id("codeValue")
+                elem.send_keys(otp)
+                elem.send_keys(Keys.ENTER)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception:
+                pass
 
         # Wait for potential promotions screen or regular account overview
         WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
