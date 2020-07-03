@@ -1,4 +1,5 @@
 import logging
+import random
 import time
 
 from selenium import common
@@ -26,13 +27,16 @@ def web_automation(driver, merchant, amount):
         expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]")),
     ))
 
+    time.sleep(1 + random.random() * 2)  # AT&T is using bot detection software, slow down the automation a bit to help avoid detection
     if driver.find_elements_by_name('password'):  # password field found, need to log in
         try:
             driver.find_element_by_id('userID').send_keys(merchant.usr)
+            time.sleep(1 + random.random() * 2)
         except common.exceptions.NoSuchElementException:
             pass
 
         driver.find_element_by_name('password').send_keys(merchant.psw)
+        time.sleep(1 + random.random() * 2)
         driver.find_element_by_xpath("//button[contains(text(),'Sign in')]").click()
 
         # Wait for potential promotions screen, regular account overview, or OTP flow
@@ -42,6 +46,7 @@ def web_automation(driver, merchant, amount):
             expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(@id,'ancel')]"))  # SMS code flow has clickable cancel button
         ))
 
+        time.sleep(1 + random.random() * 2)
         if driver.find_elements_by_id('submitDest'):  # MFA flow
             LOGGER.info('One time multi-factor auth required. This will not happen after the first debbit run.')
             try:
@@ -64,6 +69,7 @@ def web_automation(driver, merchant, amount):
                     user_mfa_choice_input = input()
                     user_mfa_choice_index = ''.join([c for c in user_mfa_choice_input if c.isdigit()])  # sanitize input to remove all non digit characters
                     driver.find_element_by_id('m' + user_mfa_choice_index + 'label').click()
+                    time.sleep(1 + random.random() * 2)
 
                 driver.find_element_by_id("submitDest").click()
                 WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, "codeValue")))
@@ -74,6 +80,7 @@ def web_automation(driver, merchant, amount):
 
                 elem = driver.find_element_by_id("codeValue")
                 elem.send_keys(otp)
+                time.sleep(1 + random.random() * 2)
                 elem.send_keys(Keys.ENTER)
             except (KeyboardInterrupt, SystemExit):
                 raise
@@ -86,9 +93,12 @@ def web_automation(driver, merchant, amount):
             expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]"))
         ))
 
+        time.sleep(1 + random.random() * 2)
+
         try:  # Dismiss promotions screen if it appeared
             driver.find_element_by_xpath("//*[contains(@src,'btnNoThanks')]").click()
             WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Make a payment')]")))
+            time.sleep(1 + random.random() * 2)
         except common.exceptions.NoSuchElementException:
             pass
 
@@ -96,31 +106,38 @@ def web_automation(driver, merchant, amount):
 
     # Enter amount and select payment card
     WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, "pmtAmount0")))
+    time.sleep(1 + random.random() * 2)
     elem = driver.find_element_by_id('pmtAmount0')
     elem.clear()
+    time.sleep(1 + random.random() * 2)
     elem.send_keys(utils.cents_to_str(amount))
+    time.sleep(1 + random.random() * 2)
     elem = driver.find_element_by_id("paymentMethod0")
     before_first_payment_card = "Select Payment Method"
     after_last_payment_card = "New checking / savings account"
     while elem.get_attribute("value").lower() != before_first_payment_card.lower():
         elem.send_keys(Keys.UP)
+        time.sleep(1 + random.random())
     while elem.get_attribute("value").lower() != merchant.card.lower() and elem.get_attribute("value").lower() != after_last_payment_card.lower():
         elem.send_keys(Keys.DOWN)
+        time.sleep(1 + random.random())
     if elem.get_attribute("value").lower() == after_last_payment_card.lower():
         raise Exception("Payment method " + merchant.card + " not found in list of saved payment methods")
 
     # Continue
     elem.send_keys(Keys.ENTER)
+    time.sleep(1 + random.random() * 2)
     try:
         WebDriverWait(driver, 20).until(expected_conditions.presence_of_element_located((By.XPATH, "//html/body/div[contains(@class,'modalwrapper active')]//p[contains(text(),'paying more than the amount due')]")))
         driver.find_element_by_xpath("//html/body/div[contains(@class,'modalwrapper active')]//button[text()='OK']").click()
+        time.sleep(1 + random.random() * 2)
     except TimeoutException:
         pass
 
     # Submit
     WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[text()='Submit']")))
     WebDriverWait(driver, 20).until(expected_conditions.invisibility_of_element_located((By.ID, "loaderOverlay")))
-    time.sleep(2)
+    time.sleep(2 + random.random())
     driver.find_element_by_xpath("//button[text()='Submit']").click()
 
     try:
