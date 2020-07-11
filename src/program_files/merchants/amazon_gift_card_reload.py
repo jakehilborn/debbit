@@ -19,7 +19,7 @@ def web_automation(driver, merchant, amount):
 
     logged_in = utils.is_logged_in(driver, timeout=30,
         logged_out_element=(By.XPATH, "//button[contains(text(),'Sign In to Continue')]"),
-        logged_in_element=(By.XPATH, "//button[contains(text(),'Reload $')]")
+        logged_in_element=(By.XPATH, "//button[starts-with(text(),'Reload')]")
     )
 
     if not logged_in:
@@ -104,7 +104,7 @@ def web_automation(driver, merchant, amount):
         except WebDriverException:
             pass
 
-    driver.find_element_by_xpath("//button[contains(text(),'Reload $" + utils.cents_to_str(amount) + "')]").click()
+    driver.find_element_by_xpath("//button[starts-with(text(),'Reload') and contains(text(),'" + utils.cents_to_str(amount) + "')]").click()
 
     time.sleep(10)  # give page a chance to load
     if 'thank-you' not in driver.current_url:
@@ -115,7 +115,7 @@ def web_automation(driver, merchant, amount):
         elem.send_keys(Keys.ENTER)
         WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + utils.cents_to_str(amount) + "')]")))
         time.sleep(1)
-        driver.find_element_by_xpath("//button[contains(text(),'Reload $" + utils.cents_to_str(amount) + "')]").click()
+        driver.find_element_by_xpath("//button[starts-with(text(),'Reload') and contains(text(),'" + utils.cents_to_str(amount) + "')]").click()
         time.sleep(10)  # give page a chance to load
 
     if 'thank-you' not in driver.current_url:
