@@ -42,12 +42,15 @@ def web_automation(driver, merchant, amount):
         time.sleep(1 + random.random() * 2)
         driver.find_element_by_xpath("//button[contains(text(),'Sign in')]").click()
 
-        # Wait for potential promotions screen, regular account overview, or OTP flow
-        WebDriverWait(driver, 120).until(utils.AnyExpectedCondition(
-            expected_conditions.element_to_be_clickable((By.XPATH, "//img[contains(@src,'btnNoThanks')]")),
-            expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]")),
-            expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(@id,'ancel')]"))  # mfa flow identified by cancel button
-        ))
+        try:
+            # Wait for potential promotions screen, regular account overview, or OTP flow
+            WebDriverWait(driver, 120).until(utils.AnyExpectedCondition(
+                expected_conditions.element_to_be_clickable((By.XPATH, "//img[contains(@src,'btnNoThanks')]")),
+                expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Make a payment')]")),
+                expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(@id,'ancel')]"))  # mfa flow identified by cancel button
+            ))
+        except TimeoutException:
+            pass  # Try continuing to the makePayment page just in case log in worked, but timeout failed
 
         time.sleep(1 + random.random() * 2)
         handle_mfa_code_flow(driver)
