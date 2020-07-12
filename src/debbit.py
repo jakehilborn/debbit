@@ -464,6 +464,9 @@ def get_webdriver(merchant):
         WEB_DRIVER_LOCK.release()
         sys.exit(1)
 
+    # Randomize viewport size to help avoid Selenium detection
+    driver.set_window_size(random.randint(1050, 1350), random.randint(700, 1000))
+
     if merchant.use_cookies:
         restore_cookies(driver, merchant.id)
 
