@@ -14,7 +14,7 @@ from result import Result
 
 LOGGER = logging.getLogger('debbit')
 
-# Written by reddit user reddit.com/u/jonnno_, PM for any bugs or issues.
+# Written by reddit user reddit.com/u/jonnno_
 
 
 def web_automation(driver, merchant, amount):
@@ -91,8 +91,8 @@ def web_automation(driver, merchant, amount):
     driver.find_element_by_xpath("//button[text()='Submit']").click()
 
     try:
-        WebDriverWait(driver, 20).until(expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'Thank you for your payment')]")))
-        WebDriverWait(driver, 20).until(expected_conditions.presence_of_element_located((By.XPATH, "//*[text()='$" + utils.cents_to_str(amount) + "']")))
+        WebDriverWait(driver, 120).until(expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'Thank you for your payment')]")))
+        WebDriverWait(driver, 120).until(expected_conditions.presence_of_element_located((By.XPATH, "//*[text()='$" + utils.cents_to_str(amount) + "']")))
     except TimeoutException:
         return Result.unverified  # Purchase command was executed, yet we are unable to verify that it was successfully executed.
         # since debbit may have spent money but isn't sure, we log the error and stop any further payments for this merchant until the user intervenes
@@ -121,8 +121,7 @@ def handle_mfa_code_flow(driver):
                     LOGGER.info('    ' + str(k) + ' - ' + v)
                 LOGGER.info('Type a number 1-9 and then hit enter: ')
                 user_mfa_choice_input = input()    # TODO put timeout around this
-                user_mfa_choice_index = ''.join([c for c in user_mfa_choice_input if
-                                                 c.isdigit()])  # sanitize input to remove all non digit characters
+                user_mfa_choice_index = ''.join([c for c in user_mfa_choice_input if c.isdigit()])  # sanitize input to remove all non digit characters
                 driver.find_element_by_id('m' + user_mfa_choice_index + 'label').click()
                 time.sleep(1 + random.random() * 2)
 
