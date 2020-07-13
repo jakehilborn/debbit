@@ -468,7 +468,7 @@ def get_webdriver(merchant):
     driver.set_window_size(random.randint(1050, 1350), random.randint(700, 1000))
 
     if merchant.use_cookies:
-        restore_cookies(driver, merchant.id)
+        restore_cookies(driver, merchant)
 
     return driver
 
@@ -476,7 +476,7 @@ def get_webdriver(merchant):
 def close_webdriver(driver, merchant):
     try:
         if merchant.use_cookies:
-            persist_cookies(driver, merchant.id)
+            persist_cookies(driver, merchant)
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as e:
@@ -497,13 +497,16 @@ def close_webdriver(driver, merchant):
         pass
 
 
-def restore_cookies(driver, merchant_id):
+def restore_cookies(driver, merchant):
     try:
-        if not os.path.exists(absolute_path('program_files', 'cookies', merchant_id)):
+        if os.path.exists(absolute_path('program_files', 'cookies', merchant.name + '_' + merchant.usr)):
+            with open(absolute_path('program_files', 'cookies', merchant.name + '_' + merchant.usr), 'r', encoding='utf-8') as f:
+                cookies = f.read()
+        elif os.path.exists(absolute_path('program_files', 'cookies', merchant.id)):  # legacy v2.0 - v2.0.2 cookie format
+            with open(absolute_path('program_files', 'cookies', merchant.id), 'r', encoding='utf-8') as f:
+                cookies = f.read()
+        else:
             return
-
-        with open(absolute_path('program_files', 'cookies', merchant_id), 'r', encoding='utf-8') as f:
-            cookies = f.read()
 
         driver.get('file://' + absolute_path('program_files', 'selenium-cookies-extension', 'restore-cookies.html'))
         driver.execute_script("document.getElementById('content').textContent = '" + cookies + "'")
@@ -523,7 +526,7 @@ def restore_cookies(driver, merchant_id):
     LOGGER.error(error_msg + ' - proceeding without restoring cookies')
 
 
-def persist_cookies(driver, merchant_id):
+def persist_cookies(driver, merchant):
     driver.get('file://' + absolute_path('program_files', 'selenium-cookies-extension', 'persist-cookies.html'))
 
     seconds = 30
@@ -540,8 +543,11 @@ def persist_cookies(driver, merchant_id):
     if not os.path.exists(absolute_path('program_files', 'cookies')):
         os.mkdir(absolute_path('program_files', 'cookies'))
 
-    with open(absolute_path('program_files', 'cookies', merchant_id), 'w', encoding='utf-8') as f:
+    with open(absolute_path('program_files', 'cookies', merchant.name + '_' + merchant.usr), 'w', encoding='utf-8') as f:
         f.write(cookies)
+
+    if os.path.exists(absolute_path('program_files', 'cookies', merchant.id)):  # legacy v2.0 - v2.0.2 cookie format
+        os.remove(absolute_path('program_files', 'cookies', merchant.id))
 
 
 def absolute_path(*rel_paths):  # works cross platform when running source script or Pyinstaller binary
