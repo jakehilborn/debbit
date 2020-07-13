@@ -288,8 +288,8 @@ def web_automation_wrapper(merchant):
     failures = 0
     threshold = 5
     while failures < threshold:
+        amount = choose_amount(merchant)
         driver = get_webdriver(merchant)
-        amount = random.randint(merchant.amount_min, merchant.amount_max)
         error_msg = None
         LOGGER.info('Spending ' + str(amount) + ' cents with ' + merchant.id + ' now')
         try:
@@ -334,6 +334,29 @@ def web_automation_wrapper(merchant):
             record_transaction(merchant.id, amount)
 
         return result
+
+
+def choose_amount(merchant):
+    now = datetime.now()
+    state = load_state(now.year, now.month)
+
+    if merchant.id not in state:  # first purchase, choose any amount in config.txt range
+        return random.randint(merchant.amount_min, merchant.amount_max)
+
+    past_amounts = []
+    for transaction in state[merchant.id]['transactions']:
+        past_amounts.append(int(transaction['amount'][:-6]))  # '50 cents' -> 50
+
+    # The amounts we've spent this month are stored in past_amounts. Generate the range of possible values between
+    # amount_min and amount_max. Pick a random value in that range, excluding any values in past_amounts. If this
+    # yields an empty set then we're forced to repeat an amount from earlier in the month. So, let's pick the amount
+    # furthest in the past in case the merchant doesn't allow duplicate amounts used in some time frame. We do this by
+    # repeating the same logic, but removing increasingly more elements from the beginning of the month's purchase
+    # history. By gradually shortening the time frame we're inspecting we'll eventually find a value to use.
+    for i in range(len(past_amounts) + 1):
+        remaining_amounts = list(set(range(merchant.amount_min, merchant.amount_max + 1)) - set(past_amounts[i:]))
+        if remaining_amounts:
+            return random.choice(remaining_amounts)
 
 
 def record_failure(driver, merchant, error_msg, cov):
