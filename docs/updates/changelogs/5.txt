@@ -1,0 +1,3 @@
+Debbit 2.0.2 Bug Fixes:
+- Fix amazon_gift_card_reload error: Unable to locate element: //button[contains(text(),'Reload $0.50')]"
+- Fix att_bill_pay login and multi-factor auth
