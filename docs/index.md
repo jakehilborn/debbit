@@ -221,7 +221,7 @@ amazon_gift_card_reload:
   card: 1111222233334444 # Amazon often requires the full 16 digit credit card number to verify you own the card before purchase.
 
 att_bill_pay:
-  amount_min: 100 # AT&T minimum payment is $1. AT&T does not allow duplicate amounts used within 24 hours of eachother. If you are doing a lot of AT&T purchases, be sure to use a min/max range larger than the number of transactions per day. 
+  amount_min: 100 # AT&T minimum payment is $1. AT&T does not allow duplicate amounts used within 24 hours of eachother. If you are doing a lot of AT&T purchases, be sure to use a min/max range larger than the number of purchases per day. 
   card: Blue Debit Card # Card name as saved in AT&T account
 
 optimum_bill_pay:
