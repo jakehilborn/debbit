@@ -29,6 +29,15 @@ def web_automation(driver, merchant, amount):
             time.sleep(3)
             driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
 
+        WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
+            expected_conditions.element_to_be_clickable((By.ID, 'ap_email')),  # first time login
+            expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'" + merchant.usr + "')]"))  # username found on page
+        ))
+
+        if driver.find_elements_by_xpath("//*[contains(text(),'" + merchant.usr + "')]"):
+            driver.find_element_by_xpath("//*[contains(text(),'" + merchant.usr + "')]").click()  # click username in case we're on the Switch Accounts page
+            WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'signInSubmit')))
+
         if driver.find_elements_by_id('ap_email'):  # if first run, fill in email. If subsequent run, nothing to fill in
             driver.find_element_by_id('ap_email').send_keys(merchant.usr)
 
