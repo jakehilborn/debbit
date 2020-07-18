@@ -94,9 +94,21 @@ def web_automation(driver, merchant, amount):
     driver.find_element_by_xpath("//button[text()='Submit']").click()
 
     try:
-        WebDriverWait(driver, 120).until(expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'Thank you for your payment')]")))
-        WebDriverWait(driver, 120).until(expected_conditions.presence_of_element_located((By.XPATH, "//*[text()='$" + utils.cents_to_str(amount) + "']")))
-    except TimeoutException:
+        WebDriverWait(driver, 120).until(utils.AnyExpectedCondition(
+            expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'Thank you for your payment')]")),
+            expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'payment was unsuccessful')]"))
+        ))
+
+        if driver.find_elements_by_xpath("//*[contains(text(),'multiple payments')]"):
+            return Result.skipped  # att does not allow payments of the same dollar amount within 24 hours, skip this purchase and try again 24 hours later
+        elif driver.find_elements_by_xpath("//*[text()='$" + utils.cents_to_str(amount) + "']"):
+            return Result.success
+        else:
+            return Result.unverified
+
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception:
         return Result.unverified  # Purchase command was executed, yet we are unable to verify that it was successfully executed.
         # since debbit may have spent money but isn't sure, we log the error and stop any further payments for this merchant until the user intervenes
 
