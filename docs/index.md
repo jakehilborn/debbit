@@ -68,7 +68,7 @@ No. Debbit ensures that the correct amount is input and the correct payment meth
 No. Debbit automation will always click the payment method specified in config.txt before making a purchase. Whatever payment method is default in your account is irrelevant.
 
 #### Merchant automation failed, how do I get it fixed?
-In the `failures` folder there will be files with timestamps for names. Each timestamp will have 4 pieces ending in `.txt`, `.png`, `.html`, and a folder ending in `coverage`. Open the .png file and make sure it doesn't have your credit card number or password showing. Then, email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there. You can attach one error or all of them, the more errors to inspect the more helpful.
+The best way is to set `send_failures_to_developer: yes` in config.txt so error reports are automatically sent to the debbit developer to be investigated and fixed. Alternatively, in the `failures` folder there will be files with timestamps for names. Each timestamp will have 4 pieces ending in `.txt`, `.png`, `.html`, and a folder ending in `coverage`. Email these three files to jakehilborn@gmail.com or open an Issue on GitHub and attach them there. You can attach one error or all of them, the more errors to inspect the more helpful.
 
 #### Can debbit automate purchases for other websites?
 Yes, please open an issue on GitHub and I'll work with you to get it automated. Alternatively, download the source code and refer to [example_merchant.py](https://github.com/jakehilborn/debbit/blob/master/src/program_files/merchants/example_merchant.py) as a reference to code your own.
@@ -89,6 +89,11 @@ hide_web_browser: no
 # Optional. If debbit is unable to complete a purchase after 5 tries
 # you'll be notified via an email from debbit.failure@debbit.com
 notify_failure: your.email@website.com
+
+# Automatically email merchant automation failure reports to the developer to
+# be investigated and fixed. Default is no, please set it to yes to help
+# improve debbit.
+send_failures_to_developer: no
 
 # You can put any name for the debit card here.
 example_card_description:
@@ -172,6 +177,8 @@ example_card_description:
 mode: burst
 hide_web_browser: yes
 notify_failure: your.email@website.com
+# PLEASE set send_failures_to_developer: yes. Website changes are much easier to fix with proper error reports.
+send_failures_to_developer: no
 
 blue_debbit_card:
   amazon_gift_card_reload:
