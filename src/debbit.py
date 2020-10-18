@@ -2,6 +2,7 @@
 import base64
 import logging
 import os
+import platform
 import random
 import smtplib
 import sys
@@ -363,8 +364,8 @@ def record_failure(driver, merchant, error_msg, cov):
 
     filename_prefix = datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + merchant.name
 
-    with open(absolute_path('failures', filename_prefix + '.txt'), 'w', encoding='utf-8') as f:  # TODO include OS in .txt
-        f.write(VERSION + ' ' + error_msg)
+    with open(absolute_path('failures', filename_prefix + '.txt'), 'w', encoding='utf-8') as f:
+        f.write(VERSION + ' ' + platform.system() + ' ' + error_msg)
 
     try:
         driver.save_screenshot(absolute_path('failures', filename_prefix + '.png'))
