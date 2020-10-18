@@ -8,29 +8,26 @@ import sys
 import time
 import traceback
 import urllib.request
+import zipfile
 from datetime import datetime
 from datetime import timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from io import BytesIO
 from threading import Timer, Lock, Thread
 
 import coverage
 import yaml  # PyYAML
+from result import Result
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException
 from selenium.webdriver.firefox.options import Options
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
-
-from result import Result
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
 
 
 def main():
     update_check()
-
-    if CONFIG['mode'] != 'burst' and CONFIG['mode'] != 'spread':
-        LOGGER.error('Set config.txt "mode" to burst or spread')
-        return
 
     now = datetime.now()
     state = load_state(now.year, now.month)
@@ -43,11 +40,8 @@ def main():
         LOGGER.info(str(cur_purchase_count) + ' ' + merchant_id + ' ' + plural('purchase', cur_purchase_count) + ' complete for ' + now.strftime('%B %Y'))
     LOGGER.info('')
 
-    for card in CONFIG:
-        if card in ['mode', 'hide_web_browser', 'notify_failure']:  # global config stored at same level as cards, filter them out
-            continue
-
-        for merchant_name, merchant_conf in CONFIG[card].items():
+    for card, merchants in CONFIG.cards.items():
+        for merchant_name, merchant_conf in merchants.items():
             load_merchant(card, merchant_name, merchant_conf)
 
 
@@ -73,9 +67,9 @@ def load_merchant(card, merchant_name, merchant_conf):
 
     merchant = Merchant(card, merchant_name, web_automation, merchant_conf)
 
-    if CONFIG['mode'] == 'spread':
+    if CONFIG.mode == 'spread':
         start_spread_schedule(merchant)
-    if CONFIG['mode'] == 'burst':
+    if CONFIG.mode == 'burst':
         Thread(target=burst_loop, args=(merchant,)).start()
 
 
@@ -363,18 +357,18 @@ def record_failure(driver, merchant, error_msg, cov):
     if not os.path.exists(absolute_path('failures')):
         os.mkdir(absolute_path('failures'))
 
-    filename = absolute_path('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + merchant.name)
+    filename_prefix = absolute_path('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + merchant.name)
 
-    with open(filename + '.txt', 'w', encoding='utf-8') as f:
+    with open(filename_prefix + '.txt', 'w', encoding='utf-8') as f:
         f.write(VERSION + ' ' + error_msg)
 
     try:
-        driver.save_screenshot(filename + '.png')
+        driver.save_screenshot(filename_prefix + '.png')
 
         dom = driver.execute_script("return document.documentElement.outerHTML")
         dom = scrub_sensitive_data(dom, merchant)
 
-        with open(filename + '.html', 'w', encoding='utf-8') as f:
+        with open(filename_prefix + '.html', 'w', encoding='utf-8') as f:
             f.write(dom)
     except (KeyboardInterrupt, SystemExit):
         raise
@@ -383,11 +377,14 @@ def record_failure(driver, merchant, error_msg, cov):
 
     try:
         if cov:  # cov is None when a debugger is attached
-            cov.html_report(directory=absolute_path(filename + '_' + 'coverage'), include='*/merchants/*')
+            cov.html_report(directory=absolute_path(filename_prefix + '_' + 'coverage'), include='*/merchants/*')
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception:
         LOGGER.error('record_failure coverage error: ' + traceback.format_exc())
+
+    if CONFIG.send_failures_to_developer:
+        report_failure(filename_prefix)
 
 
 def scrub_sensitive_data(data, merchant):
@@ -401,12 +398,24 @@ def scrub_sensitive_data(data, merchant):
         .replace(merchant.card[-4:], '***card***')  # last 4 digits of card
 
 
+def report_failure(filename_prefix):
+    mem_zip = BytesIO()
+    with zipfile.ZipFile(mem_zip, mode="w", compression=zipfile.ZIP_DEFLATED) as zip:
+        for root, dirs, files in os.walk(filename_prefix):  # TODO fix lookup of partial file name, maybe use glob
+            for filename in files:
+                zip.write(os.path.join(root, filename))
+
+    encoded_zip = base64.b64encode(mem_zip.getvalue()).decode()
+
+    # sendgrid is blocking delivery of many file types. Sending the zip as a "pdf" seems to work though.
+    send_email('debbit.failure.notify@gmail.com', filename_prefix, 'merchant automation failure report', 'error_report.pdf', 'application/pdf', encoded_zip)
+
+
 def notify_failure(exit_msg):
-    if not CONFIG.get('notify_failure') or CONFIG['notify_failure'] == 'your.email@website.com':
+    if not CONFIG.notify_failure:
         return
 
-    from_email = 'debbit.failure@debbit.com'
-    to_email = CONFIG['notify_failure']
+    to_email = CONFIG.notify_failure
     subject = 'Debbit Failure'
     html_content = ('{exit_msg}'
         '<br><br>'
@@ -418,6 +427,10 @@ def notify_failure(exit_msg):
         'there. You can send one error or the whole failures folder, the more errors to inspect the more helpful.')\
         .format(exit_msg=exit_msg)
 
+    send_email(to_email, subject, html_content)
+
+
+def send_email(to_email, subject, html_content, attachment_name=None, attachment_type=None, attachment_data=None):
     d = [b'U0cueDBSVmZZeVFRRHVHRHpY',
          b'WkRsQk4xaGtaeTVYZEhOcFdsWnpRM1ZS',
          b'WWpKa2Qxb3dUbFpQVjJSU1ltdEdOV0pyVGpKa01VMHlaVzVHV2xOR1ZrdGlNbmN4WkVabk0xSXhVa1k9']
@@ -428,18 +441,30 @@ def notify_failure(exit_msg):
             s = base64.b64decode(s)
         o += s.decode('utf-8')
 
+    from_email = 'debbit.failure@debbit.com'
+
     message = Mail(
         from_email=from_email,
         to_emails=to_email,
         subject=subject,
         html_content=html_content)
+
+    if attachment_name:
+        message.attachment = Attachment(
+            FileContent(attachment_data),
+            FileName(attachment_name),
+            FileType(attachment_type),
+            Disposition('attachment')
+        )
+
     try:
         SendGridAPIClient(o).send(message)
+        LOGGER.info('Failure notification sent to ' + to_email)  # TODO failure vs error report
         return
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as e:
-        LOGGER.error('Unable to send failure notification email - trying again via SMTP')
+        LOGGER.error('Unable to send failure notification email - trying again via SMTP')  # TODO failure vs error report
         if hasattr(e, 'message'):  # SendGrid error
             LOGGER.error(e.message)
         else:  # other error
@@ -457,18 +482,18 @@ def notify_failure(exit_msg):
         server.login(base64.b64decode('YXBpa2V5Cg==').decode('utf-8').strip(), o)
         server.sendmail(from_email, to_email, msg.as_string())
         server.close()
-        LOGGER.info('Successfully sent failure notification email via SMTP')
+        LOGGER.info('Successfully sent failure notification email via SMTP to ' + to_email)  # TODO failure vs error report
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as e:
-        LOGGER.error('Unable to send failure notification email via SMTP')
+        LOGGER.error('Unable to send failure notification email via SMTP')  # TODO failure vs error report
         LOGGER.error(e)
 
 
 def get_webdriver(merchant):
     WEB_DRIVER_LOCK.acquire()  # Only execute one purchase at a time so the console log messages don't inter mix
     options = Options()
-    options.headless = CONFIG['hide_web_browser']
+    options.headless = CONFIG.hide_web_browser
     profile = webdriver.FirefoxProfile(absolute_path('program_files', 'selenium-cookies-extension', 'firefox-profile'))
 
     # Prevent websites from detecting Selenium via evaluating `if (window.navigator.webdriver == true)` with JavaScript
@@ -642,31 +667,52 @@ class Coverage:
 
 
 class Merchant:
-    def __init__(self, card, name, web_automation, config_entry):
+    def __init__(self, card, name, web_automation, merchant_config):
         self.id = str(card) + '_' + name
         self.name = name
         self.web_automation = web_automation
 
-        self.total_purchases = config_entry['total_purchases']
-        self.amount_min = config_entry['amount_min']
-        self.amount_max = config_entry['amount_max']
-        self.usr = str(config_entry['usr'])
-        self.psw = str(config_entry['psw'])
-        self.card = str(config_entry['card'])
+        self.total_purchases = merchant_config['total_purchases']
+        self.amount_min = merchant_config['amount_min']
+        self.amount_max = merchant_config['amount_max']
+        self.usr = str(merchant_config['usr'])
+        self.psw = str(merchant_config['psw'])
+        self.card = str(merchant_config['card'])
 
-        if CONFIG['mode'] == 'burst' and not config_entry.get('burst_count'):
+        if CONFIG.mode == 'burst' and not merchant_config.get('burst_count'):
             LOGGER.error(self.id + ' config is missing "burst_count"')
             sys.exit(1)
-        self.burst_count = config_entry['burst_count']
+        self.burst_count = merchant_config['burst_count']
 
         # Optional advanced config or default values.
-        self.use_cookies = config_entry.get('advanced', {}).get('use_cookies', True)
-        self.min_day = config_entry.get('advanced', {}).get('min_day', 2)  # avoid off by one errors in all systems
-        self.max_day = config_entry.get('advanced', {}).get('max_day')  # calculated dynamically if None is returned
-        self.burst_min_gap = config_entry.get('advanced', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
-        self.burst_time_variance = config_entry.get('advanced', {}).get('burst', {}).get('time_variance', 14400)  # 4 hours
-        self.spread_min_gap = config_entry.get('advanced', {}).get('spread', {}).get('min_gap', 14400)  # 4 hours
-        self.spread_time_variance = config_entry.get('advanced', {}).get('spread', {}).get('time_variance', 14400)  # 4 hours
+        self.use_cookies = merchant_config.get('advanced', {}).get('use_cookies', True)
+        self.min_day = merchant_config.get('advanced', {}).get('min_day', 2)  # avoid off by one errors in all systems
+        self.max_day = merchant_config.get('advanced', {}).get('max_day')  # calculated dynamically if None is returned
+        self.burst_min_gap = merchant_config.get('advanced', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
+        self.burst_time_variance = merchant_config.get('advanced', {}).get('burst', {}).get('time_variance', 14400)  # 4 hours
+        self.spread_min_gap = merchant_config.get('advanced', {}).get('spread', {}).get('min_gap', 14400)  # 4 hours
+        self.spread_time_variance = merchant_config.get('advanced', {}).get('spread', {}).get('time_variance', 14400)  # 4 hours
+
+
+class Config:
+    def __init__(self, config):
+        if config.get('mode') != 'burst' and config.get('mode') != 'spread':
+            LOGGER.error('Set config.txt "mode" to burst or spread')
+            sys.exit(1)
+        self.mode = config.get('mode')
+
+        self.hide_web_browser = config.get('hide_web_browser')
+
+        if config.get('notify_failure') == 'your.email@website.com':
+            self.notify_failure = None
+        else:
+            self.notify_failure = config.get('notify_failure')  # TODO test if None works
+
+        self.send_failures_to_developer = config.get('send_failures_to_developer') # TODO test if None works
+
+        self.cards = config  # The remainder of the config is cards so we can copy the whole dict. Need to remove global config that is stored at the same level though.
+        for key in ['mode', 'hide_web_browser', 'notify_failure', 'send_failures_to_developer']:
+            self.cards.pop(key, None)
 
 
 if __name__ == '__main__':
@@ -706,18 +752,20 @@ if __name__ == '__main__':
 
     if config_to_open is None:
         LOGGER.error('Config file not found.')
-        LOGGER.error('Copy and rename sample_config.txt to config.yml or config.txt.')
+        LOGGER.error('Copy and rename sample_config.txt to config.txt or config.yml.')
         LOGGER.error('Then, put your credentials and debit card info in the file.')
         sys.exit(1)
 
     with open(absolute_path(config_to_open), 'r', encoding='utf-8') as config_f:
         try:
-            CONFIG = yaml.safe_load(config_f.read())
+            config_dict = yaml.safe_load(config_f.read())
         except yaml.YAMLError as yaml_e:
             config_error_msg = '\n\nFormatting error in ' + config_to_open + '. Ensure ' + config_to_open + ' has the same structure and spacing as the examples at https://jakehilborn.github.io/debbit/'
             if hasattr(yaml_e, 'problem_mark'):
                 config_error_msg += '\n\n' + str(yaml_e.problem_mark)
             LOGGER.error(config_error_msg)
             sys.exit(1)
+
+    CONFIG = Config(config_dict)
 
     main()
