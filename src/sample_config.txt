@@ -1,10 +1,11 @@
 # Copy and rename this file to config.txt or config.yml
 # Confused? Read instructions at https://jakehilborn.github.io/debbit/
-# If upgrading from debbit 1.0/1.0.1 to 2.0, refer to https://jakehilborn.github.io/debbit/v1-to-v2
 
 mode: burst
 hide_web_browser: no
 notify_failure: your.email@website.com
+# PLEASE set send_failures_to_developer: yes. Website changes are much easier to fix with proper error reports.
+send_failures_to_developer: no
 
 example_card_description:
   example_merchant:
