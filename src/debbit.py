@@ -357,18 +357,18 @@ def record_failure(driver, merchant, error_msg, cov):
     if not os.path.exists(absolute_path('failures')):
         os.mkdir(absolute_path('failures'))
 
-    filename_prefix = absolute_path('failures', datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + merchant.name)
+    filename_prefix = datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + merchant.name
 
-    with open(filename_prefix + '.txt', 'w', encoding='utf-8') as f:
+    with open(absolute_path('failures', filename_prefix + '.txt'), 'w', encoding='utf-8') as f:
         f.write(VERSION + ' ' + error_msg)
 
     try:
-        driver.save_screenshot(filename_prefix + '.png')
+        driver.save_screenshot(absolute_path('failures', filename_prefix + '.png'))
 
         dom = driver.execute_script("return document.documentElement.outerHTML")
         dom = scrub_sensitive_data(dom, merchant)
 
-        with open(filename_prefix + '.html', 'w', encoding='utf-8') as f:
+        with open(absolute_path('failures', filename_prefix + '.html'), 'w', encoding='utf-8') as f:
             f.write(dom)
     except (KeyboardInterrupt, SystemExit):
         raise
@@ -377,7 +377,7 @@ def record_failure(driver, merchant, error_msg, cov):
 
     try:
         if cov:  # cov is None when a debugger is attached
-            cov.html_report(directory=absolute_path(filename_prefix + '_' + 'coverage'), include='*/merchants/*')
+            cov.html_report(directory=absolute_path('failures', filename_prefix + '_' + 'coverage'), include='*/merchants/*')
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception:
@@ -398,17 +398,24 @@ def scrub_sensitive_data(data, merchant):
         .replace(merchant.card[-4:], '***card***')  # last 4 digits of card
 
 
-def report_failure(filename_prefix):
+def report_failure(failure_report_filename_prefix):
     mem_zip = BytesIO()
-    with zipfile.ZipFile(mem_zip, mode="w", compression=zipfile.ZIP_DEFLATED) as zip:
-        for root, dirs, files in os.walk(filename_prefix):  # TODO fix lookup of partial file name, maybe use glob
-            for filename in files:
-                zip.write(os.path.join(root, filename))
+    with zipfile.ZipFile(mem_zip, mode='w', compression=zipfile.ZIP_DEFLATED) as z:
+        for root, dirs, files in os.walk(absolute_path('failures')):
+            for file in files:
+                if file.startswith(failure_report_filename_prefix):
+                    z.write(os.path.join(root, file), file)
+                elif failure_report_filename_prefix in root:  # include all files in subdirs that comprise of this failure report
+                    z.write(os.path.join(root, file), os.path.join(root.split(os.sep + 'failures' + os.sep)[1], file))
+
+    # with open(absolute_path("output.zip"), "wb") as f:
+    #     f.write(mem_zip.getbuffer())
+    # return
 
     encoded_zip = base64.b64encode(mem_zip.getvalue()).decode()
 
     # sendgrid is blocking delivery of many file types. Sending the zip as a "pdf" seems to work though.
-    send_email('debbit.failure.notify@gmail.com', filename_prefix, 'merchant automation failure report', 'error_report.pdf', 'application/pdf', encoded_zip)
+    send_email('debbit.failure.notify@gmail.com', failure_report_filename_prefix, 'merchant automation failure report', 'error_report.pdf', 'application/pdf', encoded_zip)
 
 
 def notify_failure(exit_msg):
@@ -745,9 +752,9 @@ if __name__ == '__main__':
     LOGGER.info('')
 
     config_to_open = None
-    for file in ['config.yml', 'config.txt']:
-        if os.path.exists(absolute_path(file)):
-            config_to_open = file
+    for config_file in ['config.yml', 'config.txt']:
+        if os.path.exists(absolute_path(config_file)):
+            config_to_open = config_file
             break
 
     if config_to_open is None:
