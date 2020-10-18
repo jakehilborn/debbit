@@ -309,7 +309,9 @@ def web_automation_wrapper(merchant):
                 time.sleep(60 * failures ** 4)  # try again in 1min, 16min, 1.3hr, 4.3hr, 10.4hr
                 continue
             else:
-                exit_msg = merchant.id + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again. To help get this issue fixed, follow instructions at https://jakehilborn.github.io/debbit/#merchant-automation-failed-how-do-i-get-it-fixed'
+                exit_msg = merchant.id + ' failed ' + str(failures) + ' times in a row. NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
+                if not CONFIG.send_failures_to_developer:
+                    exit_msg += '  To help get this issue fixed, please set send_failures_to_developer to yes in config.txt or follow instructions at https://jakehilborn.github.io/debbit/#merchant-automation-failed-how-do-i-get-it-fixed'
                 LOGGER.error(exit_msg)
                 notify_failure(exit_msg)
                 raise Exception(exit_msg)  # exits this merchant's thread, not entire program
@@ -317,7 +319,9 @@ def web_automation_wrapper(merchant):
         if result == Result.unverified:
             record_failure(driver, merchant, 'Result.unverified', cov)
             close_webdriver(driver, merchant)
-            exit_msg = 'Unable to verify ' + merchant.id + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again. To help get this issue fixed, follow instructions at https://jakehilborn.github.io/debbit/#merchant-automation-failed-how-do-i-get-it-fixed'
+            exit_msg = 'Unable to verify ' + merchant.id + ' purchase was successful. Just in case, NOT SCHEDULING MORE ' + merchant.id + '. Stop and re-run debbit to try again.'
+            if not CONFIG.send_failures_to_developer:
+                exit_msg += '  To help get this issue fixed, please set send_failures_to_developer to yes in config.txt or follow instructions at https://jakehilborn.github.io/debbit/#merchant-automation-failed-how-do-i-get-it-fixed'
             LOGGER.error(exit_msg)
             notify_failure(exit_msg)
             sys.exit(1)  # exits this merchant's thread, not entire program
@@ -359,7 +363,7 @@ def record_failure(driver, merchant, error_msg, cov):
 
     filename_prefix = datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + merchant.name
 
-    with open(absolute_path('failures', filename_prefix + '.txt'), 'w', encoding='utf-8') as f:
+    with open(absolute_path('failures', filename_prefix + '.txt'), 'w', encoding='utf-8') as f:  # TODO include OS in .txt
         f.write(VERSION + ' ' + error_msg)
 
     try:
@@ -415,7 +419,7 @@ def report_failure(failure_report_filename_prefix):
     encoded_zip = base64.b64encode(mem_zip.getvalue()).decode()
 
     # sendgrid is blocking delivery of many file types. Sending the zip as a "pdf" seems to work though.
-    send_email('debbit.failure.notify@gmail.com', failure_report_filename_prefix, 'merchant automation failure report', 'error_report.pdf', 'application/pdf', encoded_zip)
+    send_email('failure report for developer', 'debbit.failure.notify@gmail.com', failure_report_filename_prefix, 'merchant automation failure report', 'error_report.pdf', 'application/pdf', encoded_zip)
 
 
 def notify_failure(exit_msg):
@@ -424,20 +428,30 @@ def notify_failure(exit_msg):
 
     to_email = CONFIG.notify_failure
     subject = 'Debbit Failure'
-    html_content = ('{exit_msg}'
-        '<br><br>'
-        '<strong>This debbit failure was only sent to you.</strong> To help get this issue fixed, please consider '
-        'sharing this error with the debbit developers. In the failures folder there are files with timestamps for '
-        'names. Each timestamp has 3 files ending in .txt, .png, .html, and a folder ending in _coverage. Open the '
-        '.png file and make sure it does not have your credit card number or password showing. Then, email these files '
-        'to jakehilborn@gmail.com or open an "Issue" at https://github.com/jakehilborn/debbit/issues and attach them '
-        'there. You can send one error or the whole failures folder, the more errors to inspect the more helpful.')\
-        .format(exit_msg=exit_msg)
 
-    send_email(to_email, subject, html_content)
+    if CONFIG.send_failures_to_developer:
+        html_content = ('{exit_msg}'
+            '<br><br>'
+            'This error report was also sent to the debbit developer to be investigated and fixed. Feel free to email '
+            'jakehilborn@gmail.com or open an "Issue" at https://github.com/jakehilborn/debbit/issues to discuss this '
+            'error.')\
+            .format(exit_msg=exit_msg)
+    else:
+        html_content = ('{exit_msg}'
+            '<br><br>'
+            '<strong>This debbit failure was only sent to you.</strong> To help get this issue fixed, please consider '
+            'changing send_<i>failures_to_developer</i> to <i>yes</i> in the config.txt file. This will automatically send '
+            'future error reports to the debbit developer so the issue can be investigated and fixed. You can also share '
+            'this failure manually via email. In the failures folder there are files with timestamps for names. Each '
+            'timestamp has 3 files ending in .txt, .png, .html, and a folder ending in _coverage. Email these files to '
+            'jakehilborn@gmail.com or open an "Issue" at https://github.com/jakehilborn/debbit/issues and attach them '
+            'there. You can send one error or the whole failures folder, the more errors to inspect the more helpful.')\
+            .format(exit_msg=exit_msg)
+
+    send_email('failure notification', to_email, subject, html_content)
 
 
-def send_email(to_email, subject, html_content, attachment_name=None, attachment_type=None, attachment_data=None):
+def send_email(purpose, to_email, subject, html_content, attachment_name=None, attachment_type=None, attachment_data=None):
     d = [b'U0cueDBSVmZZeVFRRHVHRHpY',
          b'WkRsQk4xaGtaeTVYZEhOcFdsWnpRM1ZS',
          b'WWpKa2Qxb3dUbFpQVjJSU1ltdEdOV0pyVGpKa01VMHlaVzVHV2xOR1ZrdGlNbmN4WkVabk0xSXhVa1k9']
@@ -466,12 +480,12 @@ def send_email(to_email, subject, html_content, attachment_name=None, attachment
 
     try:
         SendGridAPIClient(o).send(message)
-        LOGGER.info('Failure notification sent to ' + to_email)  # TODO failure vs error report
+        LOGGER.info(purpose + ' sent to ' + to_email)
         return
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as e:
-        LOGGER.error('Unable to send failure notification email - trying again via SMTP')  # TODO failure vs error report
+        LOGGER.error('Unable to send ' + purpose + ' email - trying again via SMTP')
         if hasattr(e, 'message'):  # SendGrid error
             LOGGER.error(e.message)
         else:  # other error
@@ -482,6 +496,7 @@ def send_email(to_email, subject, html_content, attachment_name=None, attachment
     msg['To'] = to_email
     msg['Subject'] = subject
     msg.attach(MIMEText(html_content, "html"))
+    # TODO SMTP attachment support
 
     try:
         server = smtplib.SMTP_SSL('smtp.sendgrid.net', 465)
@@ -489,11 +504,11 @@ def send_email(to_email, subject, html_content, attachment_name=None, attachment
         server.login(base64.b64decode('YXBpa2V5Cg==').decode('utf-8').strip(), o)
         server.sendmail(from_email, to_email, msg.as_string())
         server.close()
-        LOGGER.info('Successfully sent failure notification email via SMTP to ' + to_email)  # TODO failure vs error report
+        LOGGER.info('Successfully sent ' + purpose + ' email via SMTP to ' + to_email)
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as e:
-        LOGGER.error('Unable to send failure notification email via SMTP')  # TODO failure vs error report
+        LOGGER.error('Unable to send ' + purpose + ' email via SMTP')
         LOGGER.error(e)
 
 
@@ -713,9 +728,9 @@ class Config:
         if config.get('notify_failure') == 'your.email@website.com':
             self.notify_failure = None
         else:
-            self.notify_failure = config.get('notify_failure')  # TODO test if None works
+            self.notify_failure = config.get('notify_failure')
 
-        self.send_failures_to_developer = config.get('send_failures_to_developer') # TODO test if None works
+        self.send_failures_to_developer = config.get('send_failures_to_developer')
 
         self.cards = config  # The remainder of the config is cards so we can copy the whole dict. Need to remove global config that is stored at the same level though.
         for key in ['mode', 'hide_web_browser', 'notify_failure', 'send_failures_to_developer']:
