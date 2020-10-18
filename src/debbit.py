@@ -12,6 +12,8 @@ import urllib.request
 import zipfile
 from datetime import datetime
 from datetime import timedelta
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from io import BytesIO
@@ -413,14 +415,8 @@ def report_failure(failure_report_filename_prefix):
                 elif failure_report_filename_prefix in root:  # include all files in subdirs that comprise of this failure report
                     z.write(os.path.join(root, file), os.path.join(root.split(os.sep + 'failures' + os.sep)[1], file))
 
-    # with open(absolute_path("output.zip"), "wb") as f:
-    #     f.write(mem_zip.getbuffer())
-    # return
-
-    encoded_zip = base64.b64encode(mem_zip.getvalue()).decode()
-
     # sendgrid is blocking delivery of many file types. Sending the zip as a "pdf" seems to work though.
-    send_email('failure report for developer', 'debbit.failure.notify@gmail.com', failure_report_filename_prefix, 'merchant automation failure report', 'error_report.pdf', 'application/pdf', encoded_zip)
+    send_email('failure report for developer', 'debbit.failure.notify@gmail.com', failure_report_filename_prefix, 'merchant automation failure report', 'error_report.pdf', 'application/pdf', mem_zip.getvalue())
 
 
 def notify_failure(exit_msg):
@@ -473,7 +469,7 @@ def send_email(purpose, to_email, subject, html_content, attachment_name=None, a
 
     if attachment_name:
         message.attachment = Attachment(
-            FileContent(attachment_data),
+            FileContent(base64.b64encode(attachment_data).decode()),
             FileName(attachment_name),
             FileType(attachment_type),
             Disposition('attachment')
@@ -497,7 +493,13 @@ def send_email(purpose, to_email, subject, html_content, attachment_name=None, a
     msg['To'] = to_email
     msg['Subject'] = subject
     msg.attach(MIMEText(html_content, "html"))
-    # TODO SMTP attachment support
+
+    if attachment_name:
+        attachment = MIMEBase(attachment_type.split('/')[0], attachment_type.split('/')[1])
+        attachment.set_payload(attachment_data)
+        attachment.add_header('Content-Disposition', 'attachment', filename=attachment_name)
+        encoders.encode_base64(attachment)
+        msg.attach(attachment)
 
     try:
         server = smtplib.SMTP_SSL('smtp.sendgrid.net', 465)
