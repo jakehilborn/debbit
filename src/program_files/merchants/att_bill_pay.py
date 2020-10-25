@@ -57,51 +57,40 @@ def web_automation(driver, merchant, amount):
 
     driver.get("https://www.att.com/my/#/makePayment")
 
-    # Enter amount and select payment card
-    WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, "pmtAmount0")))
+    WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.ID, "MAP_Amount_TextField")))
     time.sleep(1 + random.random() * 2)
-    elem = driver.find_element_by_id('pmtAmount0')
+
+    cur_balance_html_text = driver.find_element_by_xpath("//span[contains(text(), 'Balance due')]").text
+    cur_balance = cur_balance_html_text.split('$')[1]
+    if utils.str_to_cents(cur_balance) == 0:
+        LOGGER.error('AT&T balance is zero, will try again later.')
+        return Result.skipped
+    elif utils.str_to_cents(cur_balance) < amount:
+        amount = utils.str_to_cents(cur_balance)
+
+    elem = driver.find_element_by_id('MAP_Amount_TextField')
     elem.clear()
     time.sleep(1 + random.random() * 2)
     elem.send_keys(utils.cents_to_str(amount))
     time.sleep(1 + random.random() * 2)
-    elem = driver.find_element_by_id("paymentMethod0")
-    before_first_payment_card = "Select Payment Method"
-    after_last_payment_card = "New checking / savings account"
-    while elem.get_attribute("value").lower() != before_first_payment_card.lower():
-        elem.send_keys(Keys.UP)
-        time.sleep(1 + random.random())
-    while elem.get_attribute("value").lower() != merchant.card.lower() and elem.get_attribute("value").lower() != after_last_payment_card.lower():
-        elem.send_keys(Keys.DOWN)
-        time.sleep(1 + random.random())
-    if elem.get_attribute("value").lower() == after_last_payment_card.lower():
-        raise Exception("Payment method " + merchant.card + " not found in list of saved payment methods")
-
-    # Continue
-    elem.send_keys(Keys.ENTER)
-    time.sleep(1 + random.random() * 2)
-    try:
-        WebDriverWait(driver, 20).until(expected_conditions.presence_of_element_located((By.XPATH, "//html/body/div[contains(@class,'modalwrapper active')]//p[contains(text(),'paying more than the amount due')]")))
-        driver.find_element_by_xpath("//html/body/div[contains(@class,'modalwrapper active')]//button[text()='OK']").click()
+    if driver.find_elements_by_xpath("//*[contains(text(),'Debit or credit card')]"):
+        driver.find_element_by_xpath("//*[contains(text(),'Debit or credit card')]").click()
         time.sleep(1 + random.random() * 2)
-    except TimeoutException:
-        pass
-
-    # Submit
-    WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[text()='Submit']")))
-    WebDriverWait(driver, 20).until(expected_conditions.invisibility_of_element_located((By.ID, "loaderOverlay")))
-    time.sleep(2 + random.random())
-    driver.find_element_by_xpath("//button[text()='Submit']").click()
+    driver.find_element_by_xpath("//input[@value='" + merchant.card + "']").click()
+    time.sleep(1 + random.random() * 2)
+    driver.find_element_by_xpath("//*[contains(text(),'Pay $" + utils.cents_to_str(amount) + "')]").click()
+    time.sleep(1 + random.random() * 2)
 
     try:
         WebDriverWait(driver, 120).until(utils.AnyExpectedCondition(
-            expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'Thank you for your payment')]")),
-            expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'payment was unsuccessful')]"))
+            expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'We got your $" + utils.cents_to_str(amount) + " payment')]")),
+            expected_conditions.presence_of_element_located((By.XPATH, "//*[contains(text(),'multiple payments for the same amount')]"))
         ))
 
-        if driver.find_elements_by_xpath("//*[contains(text(),'multiple payments')]"):
-            return Result.skipped  # att does not allow payments of the same dollar amount within 24 hours, skip this purchase and try again 24 hours later
-        elif driver.find_elements_by_xpath("//*[text()='$" + utils.cents_to_str(amount) + "']"):
+        if driver.find_elements_by_xpath("//*[contains(text(),'multiple payments for the same amount')]"):
+            LOGGER.info("Duplicate payment amount not accepted within 24 hours. Trying again later. Please use a larger range between amount_min and amount_max in config.txt for att_bill_pay to avoid duplicate payment amount scenarios.")
+            return Result.skipped
+        elif driver.find_elements_by_xpath("//*[text()='We got your $ + " + utils.cents_to_str(amount) + " payment']"):
             return Result.success
         else:
             return Result.unverified
