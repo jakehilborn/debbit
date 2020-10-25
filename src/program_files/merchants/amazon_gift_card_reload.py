@@ -59,6 +59,18 @@ def web_automation(driver, merchant, amount):
 
         handle_anti_automation_challenge(driver, merchant)
 
+        try:  # Push Notification / Email MFA
+            WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'approve the notification')]")))
+            if driver.find_elements_by_xpath("//*[contains(text(),'approve the notification')]"):
+                LOGGER.info('\n')
+                LOGGER.info('Please approve the Amazon login notification sent to your email or phone. Debbit will wait up to 3 minutes.')
+                for i in range(180):  # Wait for up to 3 minutes for user to approve login notification
+                    if not driver.find_elements_by_xpath("//*[contains(text(),'approve the notification')]"):
+                        break
+                    time.sleep(1)
+        except TimeoutException:
+            pass
+
         try:  # OTP text message
             WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'phone number ending in')]")))
             if driver.find_elements_by_id('auth-mfa-remember-device'):
