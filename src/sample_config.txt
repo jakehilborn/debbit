@@ -1,5 +1,5 @@
-# Copy and rename this file to config.txt or config.yml
-# Confused? Read instructions at https://jakehilborn.github.io/debbit/
+# Copy and rename this file to config.txt (or config.yml)
+# Questions? Read instructions at https://jakehilborn.github.io/debbit/
 
 mode: burst
 hide_web_browser: no
