@@ -391,7 +391,7 @@ def record_failure(driver, merchant, error_msg, cov):
         LOGGER.error('record_failure coverage error: ' + traceback.format_exc())
 
     if CONFIG.send_failures_to_developer:
-        report_failure(filename_prefix)
+        report_failure(filename_prefix)  # TODO put the retry number in here. If first failure, nbd, if recurring failures then it's a bigger problem.
 
 
 def scrub_sensitive_data(data, merchant):
@@ -516,6 +516,19 @@ def send_email(purpose, to_email, subject, html_content, attachment_name=None, a
 
 
 def get_webdriver(merchant):
+    if os.name == 'nt':
+        geckodriver_file = 'geckodriver.exe'
+    else:
+        geckodriver_file = 'geckodriver'
+
+    if os.path.exists(absolute_path('program_files', 'geckodriver.exe')):
+        geckodriver_path = absolute_path('program_files', 'geckodriver.exe')
+    elif os.path.exists(absolute_path('program_files', 'geckodriver')):
+        geckodriver_path = absolute_path('program_files', 'geckodriver')
+    else:
+        LOGGER.error(absolute_path('program_files', geckodriver_file) + ' does not exist. Download the latest version of geckodriver from https://github.com/mozilla/geckodriver/releases and extract it. Copy ' + geckodriver_file + ' to ' + absolute_path('program_files'))
+        sys.exit(1)
+
     WEB_DRIVER_LOCK.acquire()  # Only execute one purchase at a time so the console log messages don't inter mix
     options = Options()
     options.headless = CONFIG.hide_web_browser
@@ -528,12 +541,12 @@ def get_webdriver(merchant):
     try:
         driver = webdriver.Firefox(options=options,
                                  service_log_path=os.devnull,
-                                 executable_path=absolute_path('program_files', 'geckodriver'),
+                                 executable_path=geckodriver_path,
                                  firefox_profile=profile)
 
-    except SessionNotCreatedException:
-        LOGGER.error('')
-        LOGGER.error('Firefox not found. Please install the latest version of Firefox and try again.')
+    except SessionNotCreatedException as e:
+        LOGGER.error(str(e) + '\n')
+        LOGGER.error('There was a problem starting Firefox. Make sure the latest version of Firefox is installed. If installing/updating Firefox does not fix the issue, try downloading a newer or older version of geckodriver from https://github.com/mozilla/geckodriver/releases and extracting it. Copy ' + geckodriver_file + ' to ' + absolute_path('program_files'))
         WEB_DRIVER_LOCK.release()
         sys.exit(1)
 
