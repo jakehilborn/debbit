@@ -3,7 +3,8 @@ import random
 import time
 
 from selenium import common
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, WebDriverException
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, WebDriverException, \
+    ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions
@@ -44,8 +45,11 @@ def web_automation(driver, merchant, amount):
             time.sleep(1 + random.random() * 2)
 
         if driver.find_elements_by_id('ap_email'):  # if first run, fill in email. If subsequent run, nothing to fill in
-            driver.find_element_by_id('ap_email').send_keys(merchant.usr)
-            time.sleep(1 + random.random() * 2)
+            try:
+                driver.find_element_by_id('ap_email').send_keys(merchant.usr)
+                time.sleep(1 + random.random() * 2)
+            except ElementNotInteractableException:  # Sometimes this field is prefilled with Firstname Lastname and does not accept input
+                pass
 
         if driver.find_elements_by_id('continue'):  # a/b tested new UI flow
             driver.find_element_by_id('continue').click()
