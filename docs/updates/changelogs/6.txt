@@ -1,0 +1,12 @@
+Debbit 2.1 New Features:
+- Algorithm to avoid spending the same amount twice which some merchants do not allow
+- Optional automatic error reporting when merchant automation fails
+- Made a few more burst mode timing numbers configurable in config.txt
+- amazon_gift_card_reload push notification MFA support
+
+Debbit 2.1 Bug Fixes:
+- Fixed att_bill_pay pmtAmount0 timeout exception
+- Fixed amazon_gift_card_reload ap_email is not reachable by keyboard error
+- Fixed amazon_gift_card_reload unable to locate element: //button[starts-with(text(),'Reload') error
+- Cookies for the same account are now shared across multiple cards in config.txt
+- OSError 22 fixed for Windows users running Debbit near the end of the month
