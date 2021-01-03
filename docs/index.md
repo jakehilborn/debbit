@@ -157,6 +157,13 @@ example_card_description:
         # between gaps to allow for some randomness in the timing
         time_variance: 14400
 
+        # Gap in seconds between the multiple purchases of a single burst.
+        intra_gap: 30
+
+        # How frequently, in seconds, debbit checks if enough time has
+        # elapsed to run another burst of purchases.
+        poll_gap: 300
+
       # Spaces out purchases evenly with some randomness through the month.
       # Use this mode if running on a server or computer that never sleeps.
       spread:
@@ -214,6 +221,8 @@ red_debbit_card:
       burst:
         min_gap: 79200
         time_variance: 14400
+        intra_gap: 30
+        poll_gap: 300
       spread:
         min_gap: 17280
         time_variance: 14400
