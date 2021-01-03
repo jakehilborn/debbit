@@ -139,6 +139,8 @@ def web_automation(driver, merchant, amount):
     WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
     driver.find_element_by_id('asv-manual-reload-amount').send_keys(utils.cents_to_str(amount))
     time.sleep(1 + random.random() * 2)
+    driver.find_element_by_id('asv-manual-reload-amount').send_keys(Keys.ENTER)
+    time.sleep(1 + random.random() * 2)
 
     for element in driver.find_elements_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]"):
         try:  # Amazon has redundant non-clickable elements. This will try each one until one works.
