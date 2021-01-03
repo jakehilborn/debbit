@@ -9,7 +9,11 @@ verify_ssl = true
 pyyaml = "*"
 selenium = "*"
 sendgrid = "*"
-coverage = "==5.1"  # Refer to debbit.py pyinstaller_patches() for why this is pinned
+
+# Refer to debbit.py pyinstaller_patches() for why this is pinned.
+# Need to manually verify the STATIC_PATH var still exists and that coverage works before bumping this version.
+# Need to manually copy the htmlfiles directory to program_files with each version update.
+coverage = "==5.3.1"
 
 [requires]
 python_version = "3"  # Only tested with Python 3.7

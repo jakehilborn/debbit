@@ -9,6 +9,7 @@
     {# http://social.msdn.microsoft.com/Forums/en-US/iewebdevelopment/thread/7684445e-f080-4d8f-8529-132763348e21 #}
     <meta http-equiv="X-UA-Compatible" content="IE=emulateIE7" />
     <title>Coverage for {{relative_filename|escape}}: {{nums.pc_covered_str}}%</title>
+    <link rel="icon" sizes="32x32" href="favicon_32.png">
     <link rel="stylesheet" href="style.css" type="text/css">
     {% if extra_css %}
         <link rel="stylesheet" href="{{ extra_css }}" type="text/css">
@@ -33,12 +34,12 @@
 
         <h2 class="stats">
             {{nums.n_statements}} statements &nbsp;
-            <span class="{{category.run}} shortkey_r button_toggle_run">{{nums.n_executed}} run</span>
-            <span class="{{category.mis}} shortkey_m button_toggle_mis">{{nums.n_missing}} missing</span>
-            <span class="{{category.exc}} shortkey_x button_toggle_exc">{{nums.n_excluded}} excluded</span>
+            <button type="button" class="{{category.run}} shortkey_r button_toggle_run" title="Toggle lines run">{{nums.n_executed}} run</button>
+            <button type="button" class="{{category.mis}} shortkey_m button_toggle_mis" title="Toggle lines missing">{{nums.n_missing}} missing</button>
+            <button type="button" class="{{category.exc}} shortkey_x button_toggle_exc" title="Toggle lines excluded">{{nums.n_excluded}} excluded</button>
 
             {% if has_arcs %}
-                <span class="{{category.par}} shortkey_p button_toggle_par">{{nums.n_partial_branches}} partial</span>
+            <button type="button" class="{{category.par}} shortkey_p button_toggle_par" title="Toggle lines partially run">{{nums.n_partial_branches}} partial</button>
             {% endif %}
         </h2>
     </div>
