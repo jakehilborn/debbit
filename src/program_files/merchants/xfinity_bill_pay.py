@@ -53,7 +53,7 @@ Detected first time run captcha. Please follow these one-time steps. Future runs
 
     cur_balance = driver.find_element_by_xpath("//span[contains(text(), '$')]").text
     if utils.str_to_cents(cur_balance) == 0:
-        LOGGER.error('xfinity balance is zero, will try again later.')
+        LOGGER.warning('xfinity balance is zero, will try again later.')
         return Result.skipped
     elif utils.str_to_cents(cur_balance) < amount:
         amount = utils.str_to_cents(cur_balance)

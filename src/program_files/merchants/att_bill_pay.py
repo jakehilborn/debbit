@@ -63,7 +63,7 @@ def web_automation(driver, merchant, amount):
     cur_balance_html_text = driver.find_element_by_xpath("//span[contains(text(), 'Balance due')]").text
     cur_balance = cur_balance_html_text.split('$')[1]
     if utils.str_to_cents(cur_balance) == 0:
-        LOGGER.error('AT&T balance is zero, will try again later.')
+        LOGGER.warning('AT&T balance is zero, will try again later.')
         return Result.skipped
     elif utils.str_to_cents(cur_balance) < amount:
         amount = utils.str_to_cents(cur_balance)

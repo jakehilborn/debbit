@@ -36,7 +36,7 @@ def web_automation(driver, merchant, amount):
     LOGGER.info('Current Optimum balance is ' + cur_balance)
 
     if utils.str_to_cents(cur_balance) < 100:
-        LOGGER.error('Optimum account balance is less than minimum $1 payment, will try again later.')
+        LOGGER.warning('Optimum account balance is less than minimum $1 payment, will try again later.')
         return Result.skipped
     elif utils.str_to_cents(cur_balance) < amount:
         LOGGER.info('Adjusting spend to ' + utils.str_to_cents(cur_balance) + ' cents since current balance is less than ' + amount + ' cents')
