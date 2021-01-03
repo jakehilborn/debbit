@@ -19,13 +19,13 @@ LOGGER = logging.getLogger('debbit')
 def web_automation(driver, merchant, amount):
     driver.get('https://www.amazon.com/asv/reload/order')
 
-    logged_in = utils.is_logged_in(driver, timeout=30,
-        logged_out_element=(By.XPATH, "//button[contains(text(),'Sign In to Continue')]"),
-        logged_in_element=(By.XPATH, "//button[starts-with(text(),'Reload')]")
-    )
+    WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
+        expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")),
+        expected_conditions.element_to_be_clickable((By.XPATH, "//button[starts-with(text(),'Reload')]"))
+    ))
 
     time.sleep(1 + random.random() * 2)  # slow down automation randomly to help avoid bot detection
-    if not logged_in:
+    if driver.find_elements_by_xpath("//button[contains(text(),'Sign In to Continue')]"):
         try:
             driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
             time.sleep(1 + random.random() * 2)
@@ -36,9 +36,11 @@ def web_automation(driver, merchant, amount):
 
         WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
             expected_conditions.element_to_be_clickable((By.ID, 'ap_email')),  # first time login
-            expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'" + merchant.usr + "')]"))  # username found on page
+            expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'" + merchant.usr + "')]")),  # username found on page
+            expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount'))  # auto logged in after clicking sign in button
         ))
 
+    if not driver.find_elements_by_id('asv-manual-reload-amount'):  # Not on gift card reload page, so we did not auto login. Finish login flow.
         if driver.find_elements_by_xpath("//*[contains(text(),'" + merchant.usr + "')]"):
             driver.find_element_by_xpath("//*[contains(text(),'" + merchant.usr + "')]").click()  # click username in case we're on the Switch Accounts page
             WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'signInSubmit')))
