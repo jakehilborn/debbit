@@ -115,8 +115,8 @@ def burst_loop(merchant):
             for i in range(this_burst_count - 1):
                 if result != Result.success:
                     break
-                sleep_time = 30
-                LOGGER.info('Waiting ' + str(sleep_time) + ' seconds before next ' + merchant.id + ' purchase')
+                sleep_time = merchant.burst_intra_gap
+                LOGGER.info('Waiting ' + str(sleep_time) + ' ' + plural('second', sleep_time) + ' before next ' + merchant.id + ' purchase')
                 time.sleep(sleep_time)
                 result = web_automation_wrapper(merchant)
                 cur_purchase_count += 1
@@ -131,7 +131,7 @@ def burst_loop(merchant):
             log_next_burst_time(merchant, now, prev_burst_time, burst_gap, skip_time, cur_purchase_count)
             suppress_logs = True
         else:
-            time.sleep(300)
+            time.sleep(merchant.burst_poll_gap)
 
 
 def get_burst_min_gap(merchant, cur_purchase_count, now):
@@ -728,6 +728,8 @@ class Merchant:
         self.max_day = merchant_config.get('advanced', {}).get('max_day')  # calculated dynamically if None is returned
         self.burst_min_gap = merchant_config.get('advanced', {}).get('burst', {}).get('min_gap')  # calculated dynamically if None is returned
         self.burst_time_variance = merchant_config.get('advanced', {}).get('burst', {}).get('time_variance', 14400)  # 4 hours
+        self.burst_intra_gap = merchant_config.get('advanced', {}).get('burst', {}).get('intra_gap', 30)  # 30 seconds
+        self.burst_poll_gap = merchant_config.get('advanced', {}).get('burst', {}).get('poll_gap', 300)  # 5 minutes
         self.spread_min_gap = merchant_config.get('advanced', {}).get('spread', {}).get('min_gap', 14400)  # 4 hours
         self.spread_time_variance = merchant_config.get('advanced', {}).get('spread', {}).get('time_variance', 14400)  # 4 hours
 
