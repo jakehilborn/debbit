@@ -17,30 +17,21 @@ LOGGER = logging.getLogger('debbit')
 
 
 def web_automation(driver, merchant, amount):
-    driver.get('https://www.amazon.com/asv/reload/order')
+    driver.get('https://www.amazon.com/gp/product/B086KKT3RX')
+
+    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, "gcui-asv-reload-buynow-button")))
+    time.sleep(1 + random.random() * 2)  # slow down automation randomly to help avoid bot detection
+    driver.find_element_by_id('gcui-asv-reload-form-custom-amount').send_keys(utils.cents_to_str(amount))
+    time.sleep(1 + random.random() * 2)  # slow down automation randomly to help avoid bot detection
+    driver.find_element_by_id("gcui-asv-reload-buynow-button").click()
 
     WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
-        expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Sign In to Continue')]")),
-        expected_conditions.element_to_be_clickable((By.XPATH, "//button[starts-with(text(),'Reload')]"))
+        expected_conditions.element_to_be_clickable((By.ID, 'ap_email')),  # first time login
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'" + merchant.usr + "')]")),  # username found on login page
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]"))  # auto logged in after clicking sign in button and now in checkout
     ))
 
-    time.sleep(1 + random.random() * 2)  # slow down automation randomly to help avoid bot detection
-    if driver.find_elements_by_xpath("//button[contains(text(),'Sign In to Continue')]"):
-        try:
-            driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
-            time.sleep(1 + random.random() * 2)
-        except ElementClickInterceptedException:  # spinner blocking button
-            time.sleep(3)
-            driver.find_element_by_xpath("//button[contains(text(),'Sign In to Continue')]").click()
-            time.sleep(1 + random.random() * 2)
-
-        WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
-            expected_conditions.element_to_be_clickable((By.ID, 'ap_email')),  # first time login
-            expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'" + merchant.usr + "')]")),  # username found on page
-            expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount'))  # auto logged in after clicking sign in button
-        ))
-
-    if not driver.find_elements_by_id('asv-manual-reload-amount'):  # Not on gift card reload page, so we did not auto login. Finish login flow.
+    if not driver.find_elements_by_xpath("//*[contains(text(),'Order Summary')]"):  # Not in checkout, so we did not auto login. Finish login flow.
         if driver.find_elements_by_xpath("//*[contains(text(),'" + merchant.usr + "')]"):
             driver.find_element_by_xpath("//*[contains(text(),'" + merchant.usr + "')]").click()  # click username in case we're on the Switch Accounts page
             WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'signInSubmit')))
@@ -57,6 +48,10 @@ def web_automation(driver, merchant, amount):
             driver.find_element_by_id('continue').click()
             WebDriverWait(driver, 5).until(expected_conditions.element_to_be_clickable((By.ID, 'ap_password')))
             time.sleep(1 + random.random() * 2)
+
+        if driver.find_elements_by_name('rememberMe'):
+            time.sleep(1 + random.random() * 2)
+            driver.find_element_by_name('rememberMe').click()
 
         driver.find_element_by_id('ap_password').send_keys(merchant.psw)
         time.sleep(1 + random.random() * 2)
@@ -138,26 +133,30 @@ def web_automation(driver, merchant, amount):
         except TimeoutException:  # add mobile number page
             pass
 
-    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'asv-manual-reload-amount')))
-    driver.find_element_by_id('asv-manual-reload-amount').send_keys(utils.cents_to_str(amount))
-    time.sleep(1 + random.random() * 2)
-    driver.find_element_by_id('asv-manual-reload-amount').send_keys(Keys.ENTER)
-    time.sleep(1 + random.random() * 2)
+    # Now expecting to be on checkout page with debit card selection present
+    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]")))
+
+    if driver.find_elements_by_id('payChangeButtonId'):
+        time.sleep(1 + random.random() * 2)
+        driver.find_element_by_id('payChangeButtonId').click()
+        WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.XPATH, "//span[contains(text(),'ending in " + merchant.card[-4:] + "')]")))
 
     for element in driver.find_elements_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]"):
         try:  # Amazon has redundant non-clickable elements. This will try each one until one works.
-            element.click()
             time.sleep(1 + random.random() * 2)
+            element.click()
             break
         except WebDriverException:
             pass
 
-    driver.find_element_by_xpath("//button[starts-with(text(),'Reload') and contains(text(),'" + utils.cents_to_str(amount) + "')]").click()
-    time.sleep(1 + random.random() * 2)
+    driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
 
-    time.sleep(10)  # give page a chance to load
-    if 'thank-you' not in driver.current_url:
-        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + merchant.card[-4:] + "']")))
+    WebDriverWait(driver, 10).until(utils.AnyExpectedCondition(
+        expected_conditions.element_to_be_clickable((By.ID, 'submitOrderButtonId')),  # "Place your order" button showing, card ready to be used
+        expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + merchant.card[-4:] + "']"))  # Verify card flow
+    ))
+
+    if driver.find_elements_by_xpath("//input[@placeholder='ending in " + merchant.card[-4:] + "']"):  # Verify card flow
         elem = driver.find_element_by_xpath("//input[@placeholder='ending in " + merchant.card[-4:] + "']")
         time.sleep(1 + random.random() * 2)
         elem.send_keys(merchant.card)
@@ -165,15 +164,27 @@ def web_automation(driver, merchant, amount):
         elem.send_keys(Keys.TAB)
         time.sleep(1 + random.random() * 2)
         elem.send_keys(Keys.ENTER)
-        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Reload $" + utils.cents_to_str(amount) + "')]")))
-        time.sleep(1 + random.random() * 2)
-        driver.find_element_by_xpath("//button[starts-with(text(),'Reload') and contains(text(),'" + utils.cents_to_str(amount) + "')]").click()
-        time.sleep(10)  # give page a chance to load
 
-    if 'thank-you' not in driver.current_url:
+        WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.ID, 'orderSummaryPrimaryActionBtn')))
+        time.sleep(2 + random.random() * 2)
+        driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
+
+        WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.ID, 'submitOrderButtonId')))
+
+    time.sleep(1 + random.random() * 2)
+    driver.find_element_by_id('submitOrderButtonId').click()  # Click "Place your order" button
+
+    try:
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'your order has been placed')]")))
+    except TimeoutException:
+        LOGGER.error('Clicked "Place your order" button, but unable to confirm if order was successful.')
         return Result.unverified
 
-    return Result.success
+    if driver.find_elements_by_xpath("//*[contains(text(),'your order has been placed')]"):
+        return Result.success
+    else:
+        LOGGER.error('Clicked "Place your order" button, but unable to confirm if order was successful.')
+        return Result.unverified
 
 
 def handle_anti_automation_challenge(driver, merchant):
