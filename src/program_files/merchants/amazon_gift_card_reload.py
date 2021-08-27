@@ -28,7 +28,9 @@ def web_automation(driver, merchant, amount):
     WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
         expected_conditions.element_to_be_clickable((By.ID, 'ap_email')),  # first time login
         expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'" + merchant.usr + "')]")),  # username found on login page
-        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]"))  # auto logged in after clicking sign in button and now in checkout
+        # Already logged in
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]")),  # Checkout page
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'a payment method')]"))  # Another version of the checkout page
     ))
 
     if not driver.find_elements_by_xpath("//*[contains(text(),'Order Summary')]"):  # Not in checkout, so we did not auto login. Finish login flow.
