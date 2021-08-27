@@ -134,7 +134,10 @@ def web_automation(driver, merchant, amount):
             pass
 
     # Now expecting to be on checkout page with debit card selection present
-    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]")))
+    WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]")),  # Checkout page
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'a payment method')]"))  # Another version of the checkout page
+    ))
 
     if driver.find_elements_by_id('payChangeButtonId'):
         time.sleep(1 + random.random() * 2)
@@ -149,7 +152,10 @@ def web_automation(driver, merchant, amount):
         except WebDriverException:
             pass
 
-    driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
+    if driver.find_elements_by_id('orderSummaryPrimaryActionBtn'):
+        driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
+    else:  # Find Continue text, the grandparent element of the text is the clickable Continue button
+        driver.find_element_by_xpath("//span[contains(text(),'Continue')]").find_element_by_xpath('../..').click()
 
     WebDriverWait(driver, 10).until(utils.AnyExpectedCondition(
         expected_conditions.element_to_be_clickable((By.ID, 'submitOrderButtonId')),  # "Place your order" button showing, card ready to be used
