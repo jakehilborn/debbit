@@ -33,7 +33,7 @@ def web_automation(driver, merchant, amount):
         expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'a payment method')]"))  # Another version of the checkout page
     ))
 
-    if not driver.find_elements_by_xpath("//*[contains(text(),'Order Summary')]"):  # Not in checkout, so we did not auto login. Finish login flow.
+    if not driver.find_elements_by_xpath("//*[contains(text(),'Order Summary')]") and not driver.find_elements_by_xpath("//*[contains(text(),'a payment method')]"):  # Not in checkout, so we did not auto login. Finish login flow.
         if driver.find_elements_by_xpath("//*[contains(text(),'" + merchant.usr + "')]"):
             driver.find_element_by_xpath("//*[contains(text(),'" + merchant.usr + "')]").click()  # click username in case we're on the Switch Accounts page
             WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'signInSubmit')))
