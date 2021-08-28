@@ -28,10 +28,12 @@ def web_automation(driver, merchant, amount):
     WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
         expected_conditions.element_to_be_clickable((By.ID, 'ap_email')),  # first time login
         expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'" + merchant.usr + "')]")),  # username found on login page
-        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]"))  # auto logged in after clicking sign in button and now in checkout
+        # Already logged in
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]")),  # Checkout page
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'a payment method')]"))  # Another version of the checkout page
     ))
 
-    if not driver.find_elements_by_xpath("//*[contains(text(),'Order Summary')]"):  # Not in checkout, so we did not auto login. Finish login flow.
+    if not driver.find_elements_by_xpath("//*[contains(text(),'Order Summary')]") and not driver.find_elements_by_xpath("//*[contains(text(),'a payment method')]"):  # Not in checkout, so we did not auto login. Finish login flow.
         if driver.find_elements_by_xpath("//*[contains(text(),'" + merchant.usr + "')]"):
             driver.find_element_by_xpath("//*[contains(text(),'" + merchant.usr + "')]").click()  # click username in case we're on the Switch Accounts page
             WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.ID, 'signInSubmit')))
@@ -134,7 +136,10 @@ def web_automation(driver, merchant, amount):
             pass
 
     # Now expecting to be on checkout page with debit card selection present
-    WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]")))
+    WebDriverWait(driver, 30).until(utils.AnyExpectedCondition(
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Order Summary')]")),  # Checkout page
+        expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'a payment method')]"))  # Another version of the checkout page
+    ))
 
     if driver.find_elements_by_id('payChangeButtonId'):
         time.sleep(1 + random.random() * 2)
@@ -149,10 +154,14 @@ def web_automation(driver, merchant, amount):
         except WebDriverException:
             pass
 
-    driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
+    if driver.find_elements_by_id('orderSummaryPrimaryActionBtn'):
+        driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
+    else:  # Find Continue text, the grandparent element of the text is the clickable Continue button
+        driver.find_element_by_xpath("//span[contains(text(),'Continue')]").find_element_by_xpath('../..').click()
 
     WebDriverWait(driver, 10).until(utils.AnyExpectedCondition(
         expected_conditions.element_to_be_clickable((By.ID, 'submitOrderButtonId')),  # "Place your order" button showing, card ready to be used
+        expected_conditions.element_to_be_clickable((By.ID, 'placeYourOrder')),  # Other checkout page "Place your order" button showing, card ready to be used
         expected_conditions.element_to_be_clickable((By.XPATH, "//input[@placeholder='ending in " + merchant.card[-4:] + "']"))  # Verify card flow
     ))
 
@@ -165,14 +174,22 @@ def web_automation(driver, merchant, amount):
         time.sleep(1 + random.random() * 2)
         elem.send_keys(Keys.ENTER)
 
-        WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.ID, 'orderSummaryPrimaryActionBtn')))
-        time.sleep(2 + random.random() * 2)
-        driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
+        time.sleep(10 + random.random() * 2)
+        if driver.find_elements_by_id('orderSummaryPrimaryActionBtn'):
+            driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
+        else:  # Find Continue text, the grandparent element of the text is the clickable Continue button
+            driver.find_element_by_xpath("//span[contains(text(),'Continue')]").find_element_by_xpath('../..').click()
 
-        WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.ID, 'submitOrderButtonId')))
+        WebDriverWait(driver, 10).until(utils.AnyExpectedCondition(
+            expected_conditions.element_to_be_clickable((By.ID, 'submitOrderButtonId')),  # "Place your order" button showing, card ready to be used
+            expected_conditions.element_to_be_clickable((By.ID, 'placeYourOrder')),  # Other checkout page "Place your order" button showing, card ready to be used
+        ))
 
     time.sleep(1 + random.random() * 2)
-    driver.find_element_by_id('submitOrderButtonId').click()  # Click "Place your order" button
+    if driver.find_elements_by_id('submitOrderButtonId'):
+        driver.find_element_by_id('submitOrderButtonId').click()  # Click "Place your order" button
+    else:
+        driver.find_element_by_id('placeYourOrder').click()  # Other checkout page click "Place your order" button
 
     try:
         WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'your order has been placed')]")))
