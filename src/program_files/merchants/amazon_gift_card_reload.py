@@ -186,6 +186,12 @@ def web_automation(driver, merchant, amount):
         ))
 
     time.sleep(1 + random.random() * 2)
+
+    expected_order_total = 'Order total:$' + utils.cents_to_str(amount)
+    if driver.find_element_by_id('subtotals-marketplace-spp-bottom').text != expected_order_total:
+        LOGGER.error('Unable to verify order total is correct, not purchasing. Expected "' + expected_order_total + '", but found "' + driver.find_element_by_id('subtotals-marketplace-spp-bottom').text + '".')
+        return Result.failed
+
     if driver.find_elements_by_id('submitOrderButtonId'):
         driver.find_element_by_id('submitOrderButtonId').click()  # Click "Place your order" button
     else:
