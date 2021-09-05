@@ -5,6 +5,7 @@ import os
 import platform
 import random
 import smtplib
+import ssl
 import sys
 import time
 import traceback
@@ -21,12 +22,11 @@ from threading import Timer, Lock, Thread
 
 import coverage
 import yaml  # PyYAML
-from result import Result
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException
 from selenium.webdriver.firefox.options import Options
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
+
+from result import Result
 
 
 def main():
@@ -461,33 +461,6 @@ def send_email(purpose, to_email, subject, html_content, attachment_name=None, a
 
     from_email = 'debbit.failure@debbit.com'
 
-    message = Mail(
-        from_email=from_email,
-        to_emails=to_email,
-        subject=subject,
-        html_content=html_content)
-
-    if attachment_name:
-        message.attachment = Attachment(
-            FileContent(base64.b64encode(attachment_data).decode()),
-            FileName(attachment_name),
-            FileType(attachment_type),
-            Disposition('attachment')
-        )
-
-    try:
-        SendGridAPIClient(o).send(message)
-        LOGGER.info(purpose + ' sent to ' + to_email)
-        return
-    except (KeyboardInterrupt, SystemExit):
-        raise
-    except Exception as e:
-        LOGGER.error('Unable to send ' + purpose + ' email - trying again via SMTP')
-        if hasattr(e, 'message'):  # SendGrid error
-            LOGGER.error(e.message)
-        else:  # other error
-            LOGGER.error(e)
-
     msg = MIMEMultipart()
     msg['From'] = from_email
     msg['To'] = to_email
@@ -507,11 +480,11 @@ def send_email(purpose, to_email, subject, html_content, attachment_name=None, a
         server.login(base64.b64decode('YXBpa2V5Cg==').decode('utf-8').strip(), o)
         server.sendmail(from_email, to_email, msg.as_string())
         server.close()
-        LOGGER.info('Successfully sent ' + purpose + ' email via SMTP to ' + to_email)
+        LOGGER.info('Successfully sent ' + purpose + ' email to ' + to_email)
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as e:
-        LOGGER.error('Unable to send ' + purpose + ' email via SMTP')
+        LOGGER.error('Unable to send ' + purpose + ' email')
         LOGGER.error(e)
 
 
@@ -648,8 +621,10 @@ def plural(word, count):
 
 
 def update_check():
+    non_ssl_context = ssl.SSLContext()  # Having issues with Pyinstaller executables throwing SSL errors. Disabling SSL verification for GET operations to static GitHub pages.
+
     try:
-        latest_version = int(urllib.request.urlopen('https://jakehilborn.github.io/debbit/updates/latest.txt').read())
+        latest_version = int(urllib.request.urlopen('http://jakehilborn.github.io/debbit/updates/latest.txt', context=non_ssl_context).read())
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception:
@@ -663,7 +638,7 @@ def update_check():
 
     try:
         for i in range(VERSION_INT, latest_version):
-            changelog += '\n' + urllib.request.urlopen('https://jakehilborn.github.io/debbit/updates/changelogs/' + str(i + 1) + '.txt').read().decode('utf-8')
+            changelog += '\n' + urllib.request.urlopen('http://jakehilborn.github.io/debbit/updates/changelogs/' + str(i + 1) + '.txt', context=non_ssl_context).read().decode('utf-8')
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception:
