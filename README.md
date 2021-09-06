@@ -18,11 +18,11 @@ Debbit is a set it and forget it solution to automate monthly transaction count 
 * [Get $.99 per card per month for free](https://www.doctorofcredit.com/small-balance-waiver-a-k-a-lots-of-free-99-cent-amazon-gcs/) - Many (most?) banks will waive your credit card bill if your balance is less than $1. Use Debbit to schedule one $.99 Amazon gift card reload per month for all your sock drawer credit cards.
 
 ### Debbit currently supports
-- Amazon gift card reloads
-- Xfinity bill pay
-- AT&T bill pay
-- Optimum bill bay
-- More to come... Please open a GitHub issue with requests for new merchants/bills to support.
+- Amazon gift card reloads (confirmed working as of Sept. 5th 2021)
+- Xfinity bill pay (may not work, haven't used this in a while)
+- AT&T bill pay (may not work, haven't used this in a while)
+- Optimum bill bay (may not work, haven't used this in a while)
+- Happy to accept pull requests for new merchant implementations. Refer to [example_merchant](https://github.com/jakehilborn/debbit/blob/master/src/program_files/merchants/example_merchant.py) for instructions.
 
 ### Features
 - **Anti account lockout**: Debbit will spread purchases through the month with some randomness in timing and amount spent. These controls prevent Debbit from spamming your accounts with too many transactions too quickly or too similarly.
