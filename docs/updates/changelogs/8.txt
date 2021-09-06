@@ -1,0 +1,3 @@
+Debbit 2.1.2 Bug Fixes:
+- Add verification step to ensure Amazon gift card reload is spending the correct amount of money.
+- Add support for older macOS versions (minimum 10.12)
