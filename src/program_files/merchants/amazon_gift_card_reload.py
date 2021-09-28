@@ -198,12 +198,12 @@ def web_automation(driver, merchant, amount):
         driver.find_element_by_id('placeYourOrder').click()  # Other checkout page click "Place your order" button
 
     try:
-        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'your order has been placed')]")))
+        WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'your order has been placed') or contains(text(),'Order placed')]")))
     except TimeoutException:
         LOGGER.error('Clicked "Place your order" button, but unable to confirm if order was successful.')
         return Result.unverified
 
-    if driver.find_elements_by_xpath("//*[contains(text(),'your order has been placed')]"):
+    if driver.find_elements_by_xpath("//*[contains(text(), 'your order has been placed') or contains(text(),'Order placed')]"):
         return Result.success
     else:
         LOGGER.error('Clicked "Place your order" button, but unable to confirm if order was successful.')
