@@ -731,8 +731,22 @@ class Config:
 
 
 if __name__ == '__main__':
+    LOGLEVEL = None
+    ull = os.getenv('LOGLEVEL', 'INFO')
+    if ull == 'DEBUG':
+        LOGLEVEL = logging.DEBUG
+    if ull == 'INFO':
+        LOGLEVEL = logging.INFO
+    if ull == 'WARNING':
+        LOGLEVEL = logging.WARNING
+    if ull == 'ERROR':
+        LOGLEVEL = logging.ERROR
+    if LOGLEVEL is None:
+        print('ERROR: Unrecognized value for LOGLEVEL')
+        quit(1)
+
     LOGGER = logging.getLogger('debbit')
-    LOGGER.setLevel(logging.INFO)
+    LOGGER.setLevel(LOGLEVEL)
     log_format = '%(levelname)s: %(asctime)s %(message)s'
 
     stdout_handler = logging.StreamHandler(sys.stdout)
