@@ -13,7 +13,7 @@ pip3 install -Iv coverage==5.3.1
 
 if [[ $(sw_vers -productVersion) == "10.12"* ]]; then
     echo "downgrading pyinstaller to work on 10.12"
-    pip3 install -Iv pyinstaller==4.3 # workaround Executable contains code signature on macOS 10.12
+    pip3 install -Iv pyinstaller==4.3 # workaround "Executable contains code signature" bug on macOS 10.12
 fi
 
 find "$ROOT/src" -name "__pycache__" -print0 | xargs -0 rm -rf
@@ -24,6 +24,6 @@ pyinstaller --clean -F -c debbit.py program_files/merchants/*.py
 cp dist/debbit release/macOS
 
 cd "$ROOT/src/release"
-REL_VERSION=$(grep "VERSION = " "$ROOT/src/debbit.py" | cut -d'=' -f2 | tr -d "[' ]")
+REL_VERSION=$(cat rel_version.txt)
 mv macOS "debbit-$REL_VERSION-macOS"
 zip -r "debbit-$REL_VERSION-macOS.zip" "debbit-$REL_VERSION-macOS"

@@ -8,6 +8,8 @@ cd "$ROOT/src"
 rm -rf release
 mkdir -p release/common
 
+REL_VERSION=$(grep "VERSION = " "$ROOT/src/debbit.py" | cut -d'=' -f2 | tr -d "[' ]")
+echo $REL_VERSION > release/rel_version.txt
 tail -n +2 sample_config.txt > release/common/config.txt # the tail command removes the first line from the file
 cp "$ROOT/release_files/INSTRUCTIONS.html" release/common
 cp -a program_files release/common/program_files
@@ -18,8 +20,11 @@ cd "$ROOT/src/release"
 # remove non source files
 rm -rf common/program_files/cookies
 rm -rf common/program_files/*.log
-find common -name "__pycache__" -print0 | xargs -0 rm -rf
-find common -name ".DS_Store" -delete
+find "$ROOT/src" -name "__pycache__" -print0 | xargs -0 rm -rf
+find "$ROOT/src" -name ".DS_Store" -delete
+rm -rf "$ROOT/src/build"
+rm -rf "$ROOT/src/dist"
+rm -f "$ROOT/src/debbit.spec"
 
 cp -a common macOS
 cp -a common win64
