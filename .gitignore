@@ -6,6 +6,7 @@ state/
 failures/
 cookies/
 geckodriver*
+src/release
 
 # pyinstaller
 __pycache__/
