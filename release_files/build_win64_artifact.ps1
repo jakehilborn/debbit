@@ -6,7 +6,7 @@ pip install -Iv coverage==5.3.1
 
 # TODO don't hardcode list of merchants
 pyinstaller --clean -F -c debbit.py program_files\merchants\amazon_gift_card_reload.py program_files\merchants\att_bill_pay.py program_files\merchants\example_merchant.py program_files\merchants\optimum_bill_pay.py program_files\merchants\xfinity_bill_pay.py
-Copy-Item dist\debbit.exe -Destination release\win6ebbit.exe
+Copy-Item dist\debbit.exe -Destination release\win64\debbit.exe
 
 $REL_VERSION_TXT = Get-Content release\rel_version.txt | Out-String
 $REL_VERSION=$REL_VERSION_TXT.Trim()
