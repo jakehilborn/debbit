@@ -19,19 +19,17 @@ pipenv update
 git add Pipfile Pipfile.lock
 git commit -m "Update dependencies" || true
 
-# publish changelog snippet
 cd "$ROOT"
-echo "create changelog file, then press enter"
-read
-git add docs/updates/changelogs/*.txt
-git commit -m "Release v$REL_VERSION changelog"
-
 # set versions for release artifacts
 CUR_VERSION_INT=$(grep "VERSION_INT = " src/debbit.py | cut -d'=' -f2 | tr -d '[:space:]')
 REL_VERSION_INT=$((10#$CUR_VERSION_INT+1))
 sed -E -i.sedcopy "s|VERSION = .*|VERSION = 'v$REL_VERSION'|" src/debbit.py
 sed -E -i.sedcopy "s|VERSION_INT = .*|VERSION_INT = $REL_VERSION_INT|" src/debbit.py
 find . -name "*.sedcopy" -delete
+
+echo "create changelog file, then press enter"
+read
+git add "docs/updates/changelogs/$REL_VERSION_INT.txt"
 git add src/debbit.py
 git commit -m "set release version v$REL_VERSION"
 
