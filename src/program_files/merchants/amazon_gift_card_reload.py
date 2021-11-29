@@ -192,11 +192,8 @@ def web_automation(driver, merchant, amount):
 
     time.sleep(1 + random.random() * 2)
 
-    expected_order_total = '$' + utils.cents_to_str(amount)
-    order_total = driver.find_element_by_class_name('grand-total-price').text
-    if order_total != expected_order_total:
-        LOGGER.error('Unable to verify order total is correct, not purchasing. Expected "' + expected_order_total + '", but found "' + order_total + '".')
-        return Result.failed
+    if not is_order_total_correct(driver, amount):
+        return Result.unverified
 
     if driver.find_elements_by_id('submitOrderButtonId'):
         driver.find_element_by_id('submitOrderButtonId').click()  # Click "Place your order" button
@@ -235,3 +232,25 @@ Anti-automation captcha detected. Please follow these steps, future runs shouldn
 ''')
     except TimeoutException:
         pass
+
+
+def is_order_total_correct(driver, amount):
+    elements_to_check = []
+
+    try:
+        elements_to_check.append(driver.find_element_by_id('subtotals-marketplace-spp-bottom').text)
+    except common.exceptions.NoSuchElementException:
+        pass
+
+    try:
+        elements_to_check.append(driver.find_element_by_class_name('grand-total-price').text)
+    except common.exceptions.NoSuchElementException:
+        pass
+
+    expected_order_total = '$' + utils.cents_to_str(amount)
+    for element in elements_to_check:
+        if expected_order_total in element:
+            return True
+
+    LOGGER.error('Unable to verify order total is correct, not purchasing. Could not find expected amount ' + expected_order_total + ' in ' + str(elements_to_check))
+    return False
