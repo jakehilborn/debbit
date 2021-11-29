@@ -1,7 +1,7 @@
 cd ../src
 
 pip install -U pip
-pip list --outdated --format=freeze | %{$_.split(' ')[0]} | %{pip install --upgrade $_}
+pip list --outdated --format=freeze | %{$_.split('==')[0]} | %{pip install --upgrade $_}
 pip install -Iv coverage==5.3.1
 
 # TODO don't hardcode list of merchants
