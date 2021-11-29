@@ -6,20 +6,20 @@ ROOT=$(dirname $(cd "$(dirname "$0")"; pwd -P))
 
 cd "$ROOT/src"
 rm -rf release
-mkdir -p release/common
+mkdir -p release/common/program_files
 
 REL_VERSION=$(grep "VERSION = " "$ROOT/src/debbit.py" | cut -d'=' -f2 | tr -d "[' ]")
 echo $REL_VERSION > release/rel_version.txt
 tail -n +2 sample_config.txt > release/common/config.txt # the tail command removes the first line from the file
 cp "$ROOT/release_files/INSTRUCTIONS.html" release/common
-cp -a program_files release/common/program_files
+cp -a program_files/coverage-htmlfiles release/common/program_files/coverage-htmlfiles
+cp -a program_files/merchants release/common/program_files/merchants
+cp -a program_files/selenium-cookies-extension release/common/program_files/selenium-cookies-extension
 cp "$ROOT/release_files/HOW_TO_EDIT_MERCHANTS.txt" release/common/program_files/merchants
 
 cd "$ROOT/src/release"
 
-# remove non source files
-rm -rf common/program_files/cookies
-rm -rf common/program_files/*.log
+# remove temp files
 find "$ROOT/src" -name "__pycache__" -print0 | xargs -0 rm -rf
 find "$ROOT/src" -name ".DS_Store" -delete
 rm -rf "$ROOT/src/build"
