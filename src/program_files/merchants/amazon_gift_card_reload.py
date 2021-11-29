@@ -15,38 +15,21 @@ from result import Result
 
 LOGGER = logging.getLogger('debbit')
 
-def random_delay(msg, base=3, multiply=4):
-    rand_delay = base + random.random() * multiply
-    LOGGER.debug("SLOW: Random delay " + msg + " of " + str(rand_delay) + " seconds" )
-    time.sleep(rand_delay)
 
 def web_automation(driver, merchant, amount):
     driver.get('https://www.amazon.com/gp/product/B086KKT3RX')
 
-    random_delay('after loading initial page')
-
-    LOGGER.debug('SLOW: Wait 90 seconds to populate amount')
     WebDriverWait(driver, 90).until(expected_conditions.element_to_be_clickable((By.ID, "gcui-asv-reload-buynow-button")))
-    time.sleep(1 + random.random() * 2)  # slow down automation randomly to help avoid bot detection
-
-    #random_delay('after finding gcui-asv-reload-buynow-button')
-    # IMO we need to wait until the button displays 'Buy now'. There is a period of time (observed could be substantial) where it says "Loading ..."
-    #  if we populate the amount before it says 'Buy now' the edit box reverts to empty string
-    LOGGER.debug('SLOW: Wait 90 for button to say Buy Now')
-    for LOPP in range(30):
-        time.sleep(3)
-        buynow_span = driver.find_element_by_id('gcui-asv-reload-buynow-button-announce')
-        LOGGER.debug('SLOW: buynow_span text is:: ' + buynow_span.text )
-        if 'Buy Now' == buynow_span.text:
-            LOGGER.debug('SLOW: YAY we found it on loop # ' + str(LOPP) )
+    for i in range(300):
+        if driver.find_element_by_id("gcui-asv-reload-buynow-button").text == 'Buy Now':  # wait for 'Loading...' text to turn into 'Buy Now'
             break
-    # breakpoint()
+        time.sleep(0.1)
 
+    time.sleep(1 + random.random() * 2)  # slow down automation randomly to help avoid bot detection
     driver.find_element_by_id('gcui-asv-reload-form-custom-amount').send_keys(utils.cents_to_str(amount))
     time.sleep(1 + random.random() * 2)  # slow down automation randomly to help avoid bot detection
     driver.find_element_by_id("gcui-asv-reload-buynow-button").click()
 
-    LOGGER.debug('SLOW: Wait 90 to get the page after Buy Now')
     WebDriverWait(driver, 90).until(utils.AnyExpectedCondition(
         expected_conditions.element_to_be_clickable((By.ID, 'ap_email')),  # first time login
         expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'" + merchant.usr + "')]")),  # username found on login page
@@ -219,7 +202,6 @@ def web_automation(driver, merchant, amount):
     else:
         driver.find_element_by_id('placeYourOrder').click()  # Other checkout page click "Place your order" button
 
-    LOGGER.debug('SLOW: Looking for Order placed')
     try:
         WebDriverWait(driver, 30).until(expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'your order has been placed') or contains(text(),'Order placed')]")))
     except TimeoutException:
