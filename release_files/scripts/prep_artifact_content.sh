@@ -2,7 +2,7 @@
 set -e
 set -x
 
-ROOT=$(dirname $(cd "$(dirname "$0")"; pwd -P))
+ROOT=$(dirname $(dirname $(cd "$(dirname "$0")"; pwd -P)))
 
 cd "$ROOT/src"
 rm -rf release
@@ -11,11 +11,11 @@ mkdir -p release/common/program_files
 REL_VERSION=$(grep "VERSION = " "$ROOT/src/debbit.py" | cut -d'=' -f2 | tr -d "[' ]")
 echo $REL_VERSION > release/rel_version.txt
 tail -n +2 sample_config.txt > release/common/config.txt # the tail command removes the first line from the file
-cp "$ROOT/release_files/INSTRUCTIONS.html" release/common
+cp "$ROOT/release_files/assets/INSTRUCTIONS.html" release/common
 cp -a program_files/coverage-htmlfiles release/common/program_files/coverage-htmlfiles
 cp -a program_files/merchants release/common/program_files/merchants
 cp -a program_files/selenium-cookies-extension release/common/program_files/selenium-cookies-extension
-cp "$ROOT/release_files/HOW_TO_EDIT_MERCHANTS.txt" release/common/program_files/merchants
+cp "$ROOT/release_files/assets/HOW_TO_EDIT_MERCHANTS.txt" release/common/program_files/merchants
 
 cd "$ROOT/src/release"
 
@@ -41,7 +41,7 @@ mv geckodriver macOS/program_files
 curl -LJO https://github.com/mozilla/geckodriver/releases/download/$GECKODRIVER_VERSION/geckodriver-$GECKODRIVER_VERSION-win64.zip
 unzip geckodriver-*-win64.zip
 mv geckodriver.exe win64/program_files
-cp "$ROOT/release_files/debbit_keep_window_open.bat" win64
+cp "$ROOT/release_files/assets/debbit_keep_window_open.bat" win64
 unix2dos win64/config.txt # if we don't do this, Notepad on Windows 7 does not show new lines
 
 # specific to author's dev env

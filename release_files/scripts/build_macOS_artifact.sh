@@ -2,7 +2,7 @@
 set -e
 set -x
 
-ROOT=$(dirname $(cd "$(dirname "$0")"; pwd -P))
+ROOT=$(dirname $(dirname $(cd "$(dirname "$0")"; pwd -P)))
 
 # pyinstaller uses globally installed pip packages instead of pipenv packages
 cd "$ROOT/src"
@@ -13,7 +13,7 @@ pip3 install coverage==5.3.1 --force-reinstall
 
 if [[ $(sw_vers -productVersion) == "10.12"* ]]; then
     echo "downgrading pyinstaller to work on 10.12"
-    pip3 install -Iv pyinstaller==4.3 # workaround "Executable contains code signature" bug on macOS 10.12
+    pip3 install pyinstaller==4.3 --force-reinstall # workaround "Executable contains code signature" bug on macOS 10.12
 fi
 
 find "$ROOT/src" -name "__pycache__" -print0 | xargs -0 rm -rf

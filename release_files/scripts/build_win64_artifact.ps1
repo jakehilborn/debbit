@@ -1,4 +1,4 @@
-cd ../src
+cd ..\..\src
 
 pip install -U pip
 pip list --outdated --format=freeze | %{$_.split('==')[0]} | %{pip install --upgrade $_}
