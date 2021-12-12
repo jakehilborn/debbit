@@ -2,7 +2,7 @@ cd ../src
 
 pip install -U pip
 pip list --outdated --format=freeze | %{$_.split('==')[0]} | %{pip install --upgrade $_}
-pip install -Iv coverage==5.3.1
+pip install coverage==5.3.1 --force-reinstall
 
 # TODO don't hardcode list of merchants
 pyinstaller --clean -F -c debbit.py program_files\merchants\amazon_gift_card_reload.py program_files\merchants\att_bill_pay.py program_files\merchants\example_merchant.py program_files\merchants\optimum_bill_pay.py program_files\merchants\xfinity_bill_pay.py

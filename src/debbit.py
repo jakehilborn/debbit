@@ -657,7 +657,7 @@ def pyinstaller_runtime_patches():
     sys.path.insert(0, absolute_path())
 
     # force Coverage to look for assets in program_files directory.
-    # This nasty patch is for coverage v5.1 and may break if the dependency is updated.
+    # This nasty patch is for coverage v5.3.1 and may break if the dependency is updated.
     __import__('coverage.html', fromlist=["*"]).STATIC_PATH = [absolute_path('program_files', 'coverage-htmlfiles')]
 
 

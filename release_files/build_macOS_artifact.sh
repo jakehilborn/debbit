@@ -9,7 +9,7 @@ cd "$ROOT/src"
 pip3 install -U pip
 pip3 list --outdated --format=freeze | cut -d'=' -f1 | xargs -n1 pip3 install -U
 [ -z $(pip3 list --outdated) ] # exit script if there are still outdated packages
-pip3 install -Iv coverage==5.3.1
+pip3 install coverage==5.3.1 --force-reinstall
 
 if [[ $(sw_vers -productVersion) == "10.12"* ]]; then
     echo "downgrading pyinstaller to work on 10.12"
