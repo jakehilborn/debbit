@@ -11,7 +11,7 @@ fi
 REL_VERSION=$1
 NEXT_VERSION=$2
 
-ROOT=$(dirname $(cd "$(dirname "$0")"; pwd -P))
+ROOT=$(dirname $(dirname $(cd "$(dirname "$0")"; pwd -P)))
 
 # update dependencies
 cd "$ROOT/src"
