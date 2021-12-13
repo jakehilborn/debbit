@@ -366,8 +366,9 @@ def record_failure(driver, merchant, error_msg, cov):
 
     filename_prefix = datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f') + '_' + merchant.name
 
+    info_and_error = VERSION + ' ' + platform.system() + ' ' + error_msg  # TODO add md5 hash of merchant file to check if user modified it
     with open(absolute_path('failures', filename_prefix + '.txt'), 'w', encoding='utf-8') as f:
-        f.write(VERSION + ' ' + platform.system() + ' ' + error_msg)
+        f.write(info_and_error)
 
     try:
         driver.save_screenshot(absolute_path('failures', filename_prefix + '.png'))
@@ -391,7 +392,7 @@ def record_failure(driver, merchant, error_msg, cov):
         LOGGER.error('record_failure coverage error: ' + traceback.format_exc())
 
     if CONFIG.send_failures_to_developer:
-        report_failure(filename_prefix)  # TODO put the retry number in here. If first failure, nbd, if recurring failures then it's a bigger problem.
+        report_failure(filename_prefix, info_and_error)  # TODO put the retry number in here. If first failure, nbd, if recurring failures then it's a bigger problem.
 
 
 def scrub_sensitive_data(data, merchant):
@@ -405,7 +406,7 @@ def scrub_sensitive_data(data, merchant):
         .replace(merchant.card[-4:], '***card***')  # last 4 digits of card
 
 
-def report_failure(failure_report_filename_prefix):
+def report_failure(failure_report_filename_prefix, info_and_error):
     mem_zip = BytesIO()
     with zipfile.ZipFile(mem_zip, mode='w', compression=zipfile.ZIP_DEFLATED) as z:
         for root, dirs, files in os.walk(absolute_path('failures')):
@@ -416,7 +417,7 @@ def report_failure(failure_report_filename_prefix):
                     z.write(os.path.join(root, file), os.path.join(root.split(os.sep + 'failures' + os.sep)[1], file))
 
     # sendgrid is blocking delivery of many file types. Sending the zip as a "pdf" seems to work though.
-    send_email('failure report for developer', 'debbit.failure.notify@gmail.com', failure_report_filename_prefix, 'merchant automation failure report', 'error_report.pdf', 'application/pdf', mem_zip.getvalue())
+    send_email('failure report for developer', 'debbit.failure.notify@gmail.com', failure_report_filename_prefix, info_and_error, 'plain', 'error_report.pdf', 'application/pdf', mem_zip.getvalue())
 
 
 def notify_failure(exit_msg):
@@ -427,14 +428,14 @@ def notify_failure(exit_msg):
     subject = 'Debbit Failure'
 
     if CONFIG.send_failures_to_developer:
-        html_content = ('{exit_msg}'
+        body = ('{exit_msg}'
             '<br><br>'
             'This error report was also sent to the debbit developer to be investigated and fixed. Feel free to email '
             'jakehilborn@gmail.com or open an "Issue" at https://github.com/jakehilborn/debbit/issues to discuss this '
             'error.')\
             .format(exit_msg=exit_msg)
     else:
-        html_content = ('{exit_msg}'
+        body = ('{exit_msg}'
             '<br><br>'
             '<strong>This debbit failure was only sent to you.</strong> To help get this issue fixed, please consider '
             'changing send_<i>failures_to_developer</i> to <i>yes</i> in the config.txt file. This will automatically send '
@@ -445,10 +446,10 @@ def notify_failure(exit_msg):
             'there. You can send one error or the whole failures folder, the more errors to inspect the more helpful.')\
             .format(exit_msg=exit_msg)
 
-    send_email('failure notification', to_email, subject, html_content)
+    send_email('failure notification', to_email, subject, body, 'html')
 
 
-def send_email(purpose, to_email, subject, html_content, attachment_name=None, attachment_type=None, attachment_data=None):
+def send_email(purpose, to_email, subject, body, body_mime_type, attachment_name=None, attachment_type=None, attachment_data=None):
     d = [b'U0cueDBSVmZZeVFRRHVHRHpY',
          b'WkRsQk4xaGtaeTVYZEhOcFdsWnpRM1ZS',
          b'WWpKa2Qxb3dUbFpQVjJSU1ltdEdOV0pyVGpKa01VMHlaVzVHV2xOR1ZrdGlNbmN4WkVabk0xSXhVa1k9']
@@ -465,7 +466,7 @@ def send_email(purpose, to_email, subject, html_content, attachment_name=None, a
     msg['From'] = from_email
     msg['To'] = to_email
     msg['Subject'] = subject
-    msg.attach(MIMEText(html_content, "html"))
+    msg.attach(MIMEText(body, body_mime_type))
 
     if attachment_name:
         attachment = MIMEBase(attachment_type.split('/')[0], attachment_type.split('/')[1])
