@@ -750,8 +750,8 @@ if __name__ == '__main__':
     STATE_WRITE_LOCK = Lock()
     WEB_DRIVER_LOCK = Lock()
     DAYS_IN_MONTH = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
-    VERSION = 'v2.1.3-dev'
-    VERSION_INT = 8
+    VERSION = 'v2.1.3'
+    VERSION_INT = 9
 
     LOGGER.info('       __     __    __    _ __ ')
     LOGGER.info('  ____/ /__  / /_  / /_  (_) /_')

@@ -1,0 +1,4 @@
+Debbit 2.1.3 Bug Fixes:
+- amazon_gift_card_reload: Fix order total verification
+- amazon_gift_card_reload: Fix order confirmation
+- amazon_gift_card_reload: Fix for slow systems
