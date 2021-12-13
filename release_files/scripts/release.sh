@@ -34,7 +34,7 @@ git add src/debbit.py
 git commit -m "set release version v$REL_VERSION"
 
 # prep artifact contents for artifacts that are built in VMs
-"$ROOT/release_files/prep_artifact_contents.sh"
+"$ROOT/release_files/scripts/prep_artifact_content.sh"
 echo "create release artifacts, then press enter"
 read
 
