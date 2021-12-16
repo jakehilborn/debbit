@@ -1,5 +1,15 @@
 cd ..\..\src
 
+$PWD = if ($PSScriptRoot) { $PSScriptRoot } `
+    elseif ($psise) { split-path $psise.CurrentFile.FullPath } `
+    elseif ($psEditor) { split-path $psEditor.GetEditorContext().CurrentFile.Path }
+
+if ($PWD -like 'Z:*') {
+    Write-Output 'Copy debbit to C:\ before creating release. There is a pyinstaller bug that screws up paths when the binary is built on a network drive.'
+    pause
+    exit
+}
+
 pip install -U pip
 pip list --outdated --format=freeze | %{$_.split('==')[0]} | %{pip install --upgrade $_}
 pip install coverage==5.3.1 --force-reinstall
@@ -9,7 +19,7 @@ pyinstaller --clean -F -c debbit.py program_files\merchants\amazon_gift_card_rel
 Copy-Item dist\debbit.exe -Destination release\win64\debbit.exe
 
 $REL_VERSION_TXT = Get-Content release\rel_version.txt | Out-String
-$REL_VERSION=$REL_VERSION_TXT.Trim()
+$REL_VERSION = $REL_VERSION_TXT.Trim()
 Compress-Archive -Path release\win64\* -DestinationPath release\debbit-$REL_VERSION-win64.zip -Force
 
 pause
