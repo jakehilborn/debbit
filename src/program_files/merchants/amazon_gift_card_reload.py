@@ -146,18 +146,28 @@ def web_automation(driver, merchant, amount):
         expected_conditions.element_to_be_clickable((By.XPATH, "//*[contains(text(),'a payment method')]"))  # Another version of the checkout page
     ))
 
-    if driver.find_elements_by_id('payChangeButtonId'):
+    if driver.find_elements_by_id('payChangeButtonId'):  # expand list of cards
         time.sleep(1 + random.random() * 2)
         driver.find_element_by_id('payChangeButtonId').click()
         WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.XPATH, "//span[contains(text(),'ending in " + merchant.card[-4:] + "')]")))
 
+    if driver.find_elements_by_id('payment-change-link'):  # expand list of cards if prior element did not exist
+        time.sleep(1 + random.random() * 2)
+        driver.find_element_by_id('payment-change-link').click()
+        WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.XPATH, "//span[contains(text(),'ending in " + merchant.card[-4:] + "')]")))
+
+    card_selected = False
     for element in driver.find_elements_by_xpath("//span[contains(text(),'ending in " + merchant.card[-4:] + "')]"):
         try:  # Amazon has redundant non-clickable elements. This will try each one until one works.
             time.sleep(1 + random.random() * 2)
             element.click()
+            card_selected = True
             break
         except WebDriverException:
             pass
+
+    if not card_selected:
+        raise Exception('Unable to find or unable to click on card that has last 4 digits matching config file card.')
 
     if driver.find_elements_by_id('orderSummaryPrimaryActionBtn'):
         driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
