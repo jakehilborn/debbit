@@ -170,9 +170,16 @@ def web_automation(driver, merchant, amount):
         raise Exception('Unable to find or unable to click on card that has last 4 digits matching config file card.')
 
     if driver.find_elements_by_id('orderSummaryPrimaryActionBtn'):
+        time.sleep(1 + random.random() * 2)
         driver.find_element_by_id('orderSummaryPrimaryActionBtn').click()  # Click "Use this payment method" button
-    else:  # Find Continue text, the grandparent element of the text is the clickable Continue button
-        driver.find_element_by_xpath("//span[contains(text(),'Continue')]").find_element_by_xpath('../..').click()
+    else:  # Find Continue button. There are also non clickable spans with 'Continue' in them so try all of them until one works.
+        for element in driver.find_elements_by_xpath("//span[contains(text(),'Continue')]"):
+            try:
+                time.sleep(1 + random.random() * 2)
+                element.find_element_by_xpath('../..').click()  # the grandparent element of the text is the clickable Continue button
+                break
+            except Exception:
+                pass
 
     WebDriverWait(driver, 10).until(utils.AnyExpectedCondition(
         expected_conditions.element_to_be_clickable((By.ID, 'submitOrderButtonId')),  # "Place your order" button showing, card ready to be used
@@ -206,8 +213,10 @@ def web_automation(driver, merchant, amount):
         return Result.unverified
 
     if driver.find_elements_by_id('submitOrderButtonId'):
+        time.sleep(1 + random.random() * 2)
         driver.find_element_by_id('submitOrderButtonId').click()  # Click "Place your order" button
     else:
+        time.sleep(1 + random.random() * 2)
         driver.find_element_by_id('placeYourOrder').click()  # Other checkout page click "Place your order" button
 
     try:
