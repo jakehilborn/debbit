@@ -1,0 +1,4 @@
+Debbit 2.1.4 Bug Fixes:
+- amazon_gift_card_reload: Fix "Unable to locate element: //span[contains(text(),'Continue')]" bug
+- amazon_gift_card_reload: Fix "could not be scrolled into view" bug
+- Windows: Fix "The network path was not found: '\\\\VBoxSvr\\shared\\debbit\\src\\debbit.py'" bug
