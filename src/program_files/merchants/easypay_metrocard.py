@@ -13,14 +13,7 @@ from result import Result
 LOGGER = logging.getLogger('debbit')
 
 '''
-How to add a new merchant module to debbit
-
-Create a new .py file in the merchants directory. Create a new block in config.txt such that the merchant name matches
-the name of your new file (excluding .py). The file must have a function with the signature
-`def web_automation(driver, merchant, amount):` that returns a `Result` in all possible scenarios. In error scenarios, you
-may return Result.failed or simply let whatever exception be thrown. It will be caught and handled correctly by debbit.py
-
-For more complex scenarios, please refer to the other merchant .py files.
+This is to reload easypaymetrocard with stored Primary or Secondary card.
 '''
 
 

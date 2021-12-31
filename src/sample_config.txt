@@ -7,12 +7,18 @@ notify_failure: your.email@website.com
 # PLEASE set send_failures_to_developer: yes. Website changes are much easier to fix with proper error reports.
 send_failures_to_developer: no
 
-example_card_description:
-  example_merchant:
+cash_card:
+  easypay_metrocard:
     total_purchases: 20
-    amount_min: 10
-    amount_max: 25
-    usr: user
-    psw: pass
-    card: 2222
-    burst_count: 2
+    amount_min: 101
+    amount_max: 105
+    usr: chuq1993
+    psw: Ilovedoi323
+    card: Secondary
+    cvv: 423
+    address1: "225 E 57th st"
+    address2: "Apt 8N"
+    city: "New York"
+    state: NY
+    zip: 10022
+    burst_count: 1
