@@ -49,7 +49,8 @@ def web_automation(driver, merchant: Merchant, amount):
     driver.get('https://www.easypaymetrocard.com/vector/forte/cgi_bin/forteisapi.dll?ServiceName=ETCAccountWebSO&TemplateName=accounts/PrePaidPayment.html')
 
     assert merchant.card in ["Primary", "Secondary"], "Only supports existing Primary or Secondary card"
-    driver.find_element_by_xpath("//input[@value='Secondary']").click()
+    card_xpath = "//input[@value='{}']".format(merchant.card)
+    driver.find_element_by_xpath(card_xpath).click()
     time.sleep(2)
     driver.find_element_by_id("securitycode").send_keys(merchant.cvv)
     time.sleep(2)
