@@ -693,6 +693,16 @@ class Merchant:
         self.psw = str(merchant_config['psw'])
         self.card = str(merchant_config['card'])
 
+        # Optional fields
+        self.cvv = merchant_config.get('cvv', None)
+        self.exp_month = merchant_config.get('exp_month', None)
+        self.exp_year = merchant_config.get('exp_year', None)
+        self.address1 = merchant_config.get('address1', None)
+        self.address2 = merchant_config.get('address2', None)
+        self.city = merchant_config.get('city', None)
+        self.state = merchant_config.get('state', None)
+        self.zip = merchant_config.get('zip', None)
+
         if CONFIG.mode == 'burst' and not merchant_config.get('burst_count'):
             LOGGER.error(self.id + ' config is missing "burst_count"')
             sys.exit(1)
