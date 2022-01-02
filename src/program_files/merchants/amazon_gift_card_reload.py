@@ -212,6 +212,9 @@ def web_automation(driver, merchant, amount):
     if not is_order_total_correct(driver, amount):
         return Result.unverified
 
+    if merchant.dry_run == True:
+      return Result.dry_run
+
     if driver.find_elements_by_id('submitOrderButtonId'):
         time.sleep(1 + random.random() * 2)
         driver.find_element_by_id('submitOrderButtonId').click()  # Click "Place your order" button
@@ -226,11 +229,37 @@ def web_automation(driver, merchant, amount):
         return Result.unverified
 
     if driver.find_elements_by_xpath("//*[contains(text(), 'your order has been placed') or contains(text(),'Order placed')]"):
+        if merchant.merchant_specific_config['archive'] == True:
+            best_effort_archive_order(driver)
+
         return Result.success
     else:
         LOGGER.error('Clicked "Place your order" button, but unable to confirm if order was successful.')
         return Result.unverified
 
+# Best-effort archive the most recent GC reload if we're asked to
+def best_effort_archive_order(driver):
+    amazon_consistency_delay_sec = 8
+
+    LOGGER.info(
+        f'Waiting {amazon_consistency_delay_sec} seconds before attempting to archive last reload')
+    time.sleep(amazon_consistency_delay_sec)
+
+    driver.get('https://smile.amazon.com/gp/your-account/order-history/')
+
+    first_archive_link_xpath = "(//a[contains(text(),'Amazon Reload')]/../../../../../../../../../../..//a[contains(text(),'Archive order')])"
+
+    try:
+        WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.XPATH, first_archive_link_xpath)))
+        driver.find_element_by_xpath(first_archive_link_xpath).click()
+
+        archive_popup_link_xpath = "//input[@value='archiveOrder']"
+        WebDriverWait(driver, 10).until(expected_conditions.element_to_be_clickable((By.XPATH, archive_popup_link_xpath)))
+        driver.find_element_by_xpath(archive_popup_link_xpath).click()
+
+        LOGGER.info('Archived reload successfully.')
+    except TimeoutException:
+        LOGGER.warning("Couldn't find a reload to archive. Continuing.")
 
 def handle_anti_automation_challenge(driver, merchant):
     try:

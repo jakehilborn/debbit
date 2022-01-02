@@ -57,6 +57,10 @@ def web_automation(driver, merchant, amount):
     time.sleep(2)  # pause to let user watch what's happening - not necessary for real merchants
     driver.find_element_by_id('amount').send_keys(utils.cents_to_str(amount))
     time.sleep(2)  # pause to let user watch what's happening - not necessary for real merchants
+
+    if merchant.dry_run == True:
+        return Result.dry_run
+
     driver.find_element_by_id('submit-payment').click()
 
     try:

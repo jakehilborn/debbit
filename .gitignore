@@ -21,6 +21,7 @@ _site/
 # Files on maintainer's machine
 .DS_Store
 .idea/
+.vscode/
 .editorconfig
 notes.txt
 

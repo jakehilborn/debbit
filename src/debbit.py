@@ -111,8 +111,13 @@ def burst_loop(merchant):
             LOGGER.info('Now bursting ' + str(this_burst_count) + ' ' + merchant.id + ' ' + plural('purchase', this_burst_count))
 
             result = web_automation_wrapper(merchant)  # First execution outside of loop so we don't sleep before first execution and don't sleep after last execution
+            if (result == Result.dry_run):
+                LOGGER.info('Dry run completed - no payment was submitted.')
+                break
+
             cur_purchase_count += 1
-            for i in range(this_burst_count - 1):
+
+            for _ in range(this_burst_count - 1):
                 if result != Result.success:
                     break
                 sleep_time = merchant.burst_intra_gap
@@ -718,6 +723,8 @@ class Merchant:
         self.burst_poll_gap = merchant_config.get('advanced', {}).get('burst', {}).get('poll_gap', 300)  # 5 minutes
         self.spread_min_gap = merchant_config.get('advanced', {}).get('spread', {}).get('min_gap', 14400)  # 4 hours
         self.spread_time_variance = merchant_config.get('advanced', {}).get('spread', {}).get('time_variance', 14400)  # 4 hours
+        self.dry_run = merchant_config.get('dry_run', False)
+        self.merchant_specific_config = merchant_config['merchant_specific_config']
 
 
 class Config:
