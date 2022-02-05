@@ -204,7 +204,8 @@ def schedule_next_spread(merchant):
 
     if cur_purchase_count < merchant.total_purchases:
         remaining_purchase_count = merchant.total_purchases - cur_purchase_count
-        month_end_day = merchant.max_day if merchant.max_day else DAYS_IN_MONTH[now.month] - 1
+        month_end_day = DAYS_IN_MONTH[now.month] - 1
+        month_end_day = merchant.max_day if (merchant.max_day and merchant.max_day < month_end_day) else month_end_day
         remaining_secs_in_month = (datetime(now.year, now.month, month_end_day) - now).total_seconds()
         average_gap = remaining_secs_in_month / remaining_purchase_count
 
